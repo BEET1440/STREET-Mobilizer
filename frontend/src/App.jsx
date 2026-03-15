@@ -1,25 +1,42 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { LayoutDashboard, UserPlus, Search, LogOut, ShieldCheck, Database, AlertCircle, CheckCircle2, Wifi, WifiOff, RefreshCcw, Save } from 'lucide-react';
+import { LayoutDashboard, UserPlus, Search, LogOut, ShieldCheck, Database, AlertCircle, CheckCircle2, Wifi, WifiOff, RefreshCcw, Save, Map as MapIcon, Crosshair } from 'lucide-react';
 import { useOffline } from './hooks/useOffline';
 import { saveOfflineRecord } from './utils/offlineStorage';
+import HotspotMap from './components/HotspotMap';
 
 // Mock components (will implement properly later)
 const Dashboard = () => {
   const { offlineCount, isOnline } = useOffline();
+  const [showMap, setShowMap] = useState(false);
+  
+  // Mock records for map visualization
+  const mockRecords = [
+    { name: 'John Doe', location: 'Central Park', geolocation: { lat: -1.2833, lng: 36.8167 }, blockchainHash: '0x7a2...f4e' },
+    { name: 'Samuel Omondi', location: 'Kibera', geolocation: { lat: -1.3000, lng: 36.7800 }, blockchainHash: '0x3c1...b2d' },
+    { name: 'Aisha Kamau', location: 'Eastleigh', geolocation: { lat: -1.2750, lng: 36.8500 }, blockchainHash: '0x9d4...e1f' },
+  ];
   
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-        {!isOnline && (
-          <div className="flex items-center gap-2 text-orange-600 bg-orange-100 px-4 py-2 rounded-full font-bold">
-            <WifiOff size={20} /> Offline Mode Active
-          </div>
-        )}
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setShowMap(!showMap)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition ${showMap ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-600'}`}
+          >
+            <MapIcon size={20} /> {showMap ? 'Show List' : 'Show Hotspot Map'}
+          </button>
+          {!isOnline && (
+            <div className="flex items-center gap-2 text-orange-600 bg-orange-100 px-4 py-2 rounded-full font-bold">
+              <WifiOff size={20} /> Offline Mode Active
+            </div>
+          )}
+        </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
         <div className="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-500">
           <h3 className="text-gray-500 text-sm font-medium">Total Registered</h3>
           <p className="text-3xl font-bold">124</p>
@@ -38,36 +55,60 @@ const Dashboard = () => {
         </div>
       </div>
       
-      <div className="mt-10 bg-white p-6 rounded-lg shadow-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Recent Activity</h2>
-          <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded-full animate-pulse">Live AI Monitoring</span>
+      {showMap ? (
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Hotspot Density Map</h2>
+            <div className="flex gap-4 text-xs">
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500"></span> High Density</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-lime-500"></span> Moderate</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500"></span> Low</span>
+            </div>
+          </div>
+          <HotspotMap records={mockRecords} />
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div className="p-4 bg-red-50 rounded-lg border border-red-100">
+              <h4 className="text-red-800 font-bold text-sm">Identified Dangerous Areas</h4>
+              <p className="text-red-600 text-xs mt-1">Based on reports and density patterns: Sector 4, Railway Crossing.</p>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+              <h4 className="text-blue-800 font-bold text-sm">Migration Trends</h4>
+              <p className="text-blue-600 text-xs mt-1">Increasing movement towards Central Market due to seasonal harvests.</p>
+            </div>
+          </div>
         </div>
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Missing Check</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Blockchain Hash</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap font-medium">John Doe</td>
-              <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Verified</span></td>
-              <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">No Match</span></td>
-              <td className="px-6 py-4 whitespace-nowrap font-mono text-xs">0x7a2...f4e</td>
-            </tr>
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap font-medium">Samuel Omondi</td>
-              <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Verified</span></td>
-              <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Gov DB Match</span></td>
-              <td className="px-6 py-4 whitespace-nowrap font-mono text-xs">0x3c1...b2d</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      ) : (
+        <div className="mt-10 bg-white p-6 rounded-lg shadow-md">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Recent Activity</h2>
+            <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded-full animate-pulse">Live AI Monitoring</span>
+          </div>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Missing Check</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Blockchain Hash</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              <tr>
+                <td className="px-6 py-4 whitespace-nowrap font-medium">John Doe</td>
+                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Verified</span></td>
+                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">No Match</span></td>
+                <td className="px-6 py-4 whitespace-nowrap font-mono text-xs">0x7a2...f4e</td>
+              </tr>
+              <tr>
+                <td className="px-6 py-4 whitespace-nowrap font-medium">Samuel Omondi</td>
+                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Verified</span></td>
+                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Gov DB Match</span></td>
+                <td className="px-6 py-4 whitespace-nowrap font-mono text-xs">0x3c1...b2d</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };
@@ -78,6 +119,29 @@ const Registration = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [offlineSaved, setOfflineSaved] = useState(false);
+  const [locationData, setLocationData] = useState(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+
+  const captureLocation = () => {
+    setIsGettingLocation(true);
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        setLocationData({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        });
+        setIsGettingLocation(false);
+      }, (error) => {
+        console.error("Error getting location:", error);
+        // Fallback mock location for demo
+        setLocationData({ lat: -1.2921, lng: 36.8219, accuracy: 15 });
+        setIsGettingLocation(false);
+      });
+    } else {
+      setIsGettingLocation(false);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -89,7 +153,14 @@ const Registration = () => {
     const gender = elements[2].value;
     const location = elements[3].value;
 
-    const recordData = { name, age, gender, location, biometricHash: `bio_${Date.now()}` };
+    const recordData = { 
+      name, 
+      age, 
+      gender, 
+      location, 
+      biometricHash: `bio_${Date.now()}`,
+      geolocation: locationData
+    };
 
     if (!isOnline) {
       // Handle Offline Save
@@ -138,7 +209,7 @@ const Registration = () => {
             <p className="text-gray-600 mb-6">The record has been securely added to the blockchain.</p>
           </>
         )}
-        <button onClick={() => { setIsSuccess(false); setOfflineSaved(false); }} className="bg-blue-600 text-white px-6 py-2 rounded-md font-bold">Register Another</button>
+        <button onClick={() => { setIsSuccess(false); setOfflineSaved(false); setLocationData(null); }} className="bg-blue-600 text-white px-6 py-2 rounded-md font-bold">Register Another</button>
       </div>
     );
   }
@@ -207,9 +278,35 @@ const Registration = () => {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Location Found</label>
+          <label className="block text-sm font-medium text-gray-700">Location Description</label>
           <input type="text" required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="Street, City" />
         </div>
+
+        {/* Geo-tagging Section */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+              <MapIcon size={16} /> GPS Geo-Tagging
+            </label>
+            <button 
+              type="button"
+              onClick={captureLocation}
+              disabled={isGettingLocation}
+              className={`text-xs font-bold flex items-center gap-1 px-3 py-1 rounded transition ${locationData ? 'bg-green-100 text-green-700' : 'bg-blue-600 text-white'}`}
+            >
+              <Crosshair size={12} className={isGettingLocation ? 'animate-spin' : ''} />
+              {isGettingLocation ? 'Capturing...' : locationData ? 'Location Captured' : 'Get Current GPS'}
+            </button>
+          </div>
+          {locationData ? (
+            <div className="text-[10px] font-mono text-gray-500 bg-white p-2 rounded border border-gray-100">
+              LAT: {locationData.lat.toFixed(6)} | LNG: {locationData.lng.toFixed(6)} | ACCURACY: {locationData.accuracy.toFixed(1)}m
+            </div>
+          ) : (
+            <p className="text-[10px] text-gray-400 italic">No GPS coordinates attached to this record yet.</p>
+          )}
+        </div>
+
         <div className="border-2 border-dashed border-blue-200 p-6 rounded-lg text-center bg-blue-50">
           <ShieldCheck className="mx-auto h-12 w-12 text-blue-500 mb-2" />
           <p className="text-sm text-blue-700 font-medium">Face Biometrics & Fingerprint Extraction</p>

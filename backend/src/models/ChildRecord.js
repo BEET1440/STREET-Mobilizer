@@ -17,6 +17,11 @@ const childRecordSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  geolocation: {
+    lat: Number,
+    lng: Number,
+    accuracy: Number,
+  },
   biometricHash: {
     type: String,
     required: true,
