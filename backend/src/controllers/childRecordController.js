@@ -31,7 +31,7 @@ exports.registerChild = async (req, res) => {
       biometricHash,
       faceBiometricTemplate,
       isMissing: matchResult.isMatch
-    });
+    }, req.user.email);
 
     const childRecord = await ChildRecord.create({
       name,
@@ -49,6 +49,12 @@ exports.registerChild = async (req, res) => {
         parentContact: matchResult.parentContact
       } : undefined,
       registeredBy: req.user._id,
+      auditLogs: [{
+        action: 'REGISTERED',
+        performedBy: req.user._id,
+        organization: req.user.organization?.name || 'Unknown',
+        details: 'Initial registration'
+      }]
     });
 
     res.status(201).json({
@@ -127,6 +133,58 @@ exports.verifyRecord = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+// @desc    Add intervention to a record
+// @route   POST /api/records/:id/intervention
+// @access  Private (Social Worker, Hospital, Shelter, NGO Admin)
+exports.addIntervention = async (req, res) => {
+  try {
+    const { type, details } = req.body;
+    const record = await ChildRecord.findById(req.params.id);
+
+    if (!record) {
+      return res.status(404).json({ message: 'Child record not found' });
+    }
+
+    // Log to blockchain
+    const blockchainRef = mockBlockchain.logIntervention(
+      record._id,
+      { type, details },
+      req.user.email,
+      req.user.organization?.name || 'Unknown'
+    );
+
+    const intervention = {
+      organization: req.user.organization?.name || 'Unknown',
+      type,
+      details,
+      performedBy: req.user._id,
+      blockchainRef
+    };
+
+    record.interventions.push(intervention);
+    
+    // Add to audit log
+    record.auditLogs.push({
+      action: 'INTERVENTION_ADDED',
+      performedBy: req.user._id,
+      organization: req.user.organization?.name || 'Unknown',
+      details: `Added ${type} intervention`
+    });
+
+    await record.save();
+
+    res.status(201).json({
+      success: true,
+      data: record
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
     });
   }
 };

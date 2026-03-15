@@ -1,32 +1,46 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { LayoutDashboard, UserPlus, Search, LogOut, ShieldCheck, Database, AlertCircle, CheckCircle2, Wifi, WifiOff, RefreshCcw, Save, Map as MapIcon, Crosshair } from 'lucide-react';
+import { LayoutDashboard, UserPlus, Search, LogOut, ShieldCheck, Database, AlertCircle, CheckCircle2, Wifi, WifiOff, RefreshCcw, Save, Map as MapIcon, Crosshair, Users, Activity, HeartPulse, Building2, Landmark, Stethoscope } from 'lucide-react';
 import { useOffline } from './hooks/useOffline';
 import { saveOfflineRecord } from './utils/offlineStorage';
 import HotspotMap from './components/HotspotMap';
+
+// Organization/Role config
+const ORG_CONFIG = { 
+  'NGO': { icon: <Users className="text-blue-500" />, label: 'Social Work' },
+  'Government': { icon: <Landmark className="text-purple-500" />, label: 'Policy' },
+  'Shelter': { icon: <Building2 className="text-orange-500" />, label: 'Housing' },
+  'Hospital': { icon: <Stethoscope className="text-red-500" />, label: 'Medical' },
+};
 
 // Mock components (will implement properly later)
 const Dashboard = () => {
   const { offlineCount, isOnline } = useOffline();
   const [showMap, setShowMap] = useState(false);
+  const [activeOrg, setActiveOrg] = useState('Red Cross (NGO)');
   
   // Mock records for map visualization
   const mockRecords = [
-    { name: 'John Doe', location: 'Central Park', geolocation: { lat: -1.2833, lng: 36.8167 }, blockchainHash: '0x7a2...f4e' },
-    { name: 'Samuel Omondi', location: 'Kibera', geolocation: { lat: -1.3000, lng: 36.7800 }, blockchainHash: '0x3c1...b2d' },
-    { name: 'Aisha Kamau', location: 'Eastleigh', geolocation: { lat: -1.2750, lng: 36.8500 }, blockchainHash: '0x9d4...e1f' },
+    { name: 'John Doe', location: 'Central Park', geolocation: { lat: -1.2833, lng: 36.8167 }, blockchainHash: '0x7a2...f4e', interventions: 3 },
+    { name: 'Samuel Omondi', location: 'Kibera', geolocation: { lat: -1.3000, lng: 36.7800 }, blockchainHash: '0x3c1...b2d', interventions: 1 },
+    { name: 'Aisha Kamau', location: 'Eastleigh', geolocation: { lat: -1.2750, lng: 36.8500 }, blockchainHash: '0x9d4...e1f', interventions: 5 },
   ];
   
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Coordination Dashboard</h1>
+          <p className="text-gray-500 text-sm mt-1 flex items-center gap-2">
+            Logged in as: <span className="font-bold text-blue-600">{activeOrg}</span>
+          </p>
+        </div>
         <div className="flex gap-3">
           <button 
             onClick={() => setShowMap(!showMap)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition ${showMap ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-600'}`}
           >
-            <MapIcon size={20} /> {showMap ? 'Show List' : 'Show Hotspot Map'}
+            <MapIcon size={20} /> {showMap ? 'Show List' : 'Show Network Hotspots'}
           </button>
           {!isOnline && (
             <div className="flex items-center gap-2 text-orange-600 bg-orange-100 px-4 py-2 rounded-full font-bold">
@@ -38,72 +52,76 @@ const Dashboard = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
         <div className="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-500">
-          <h3 className="text-gray-500 text-sm font-medium">Total Registered</h3>
-          <p className="text-3xl font-bold">124</p>
+          <h3 className="text-gray-500 text-sm font-medium">Network Records</h3>
+          <p className="text-3xl font-bold">1,204</p>
+          <p className="text-[10px] text-blue-600 mt-2 font-bold">Shared across 12 Orgs</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md border-t-4 border-red-500">
-          <h3 className="text-gray-500 text-sm font-medium">Missing Matches</h3>
+          <h3 className="text-gray-500 text-sm font-medium">Missing Alerts</h3>
           <p className="text-3xl font-bold text-red-600">12</p>
+          <p className="text-[10px] text-red-600 mt-2 font-bold">High Priority Cases</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md border-t-4 border-orange-500">
-          <h3 className="text-gray-500 text-sm font-medium">Unsynced (Offline)</h3>
-          <p className="text-3xl font-bold text-orange-600">{offlineCount}</p>
+        <div className="bg-white p-6 rounded-lg shadow-md border-t-4 border-purple-500">
+          <h3 className="text-gray-500 text-sm font-medium">Interventions</h3>
+          <p className="text-3xl font-bold text-purple-600">458</p>
+          <p className="text-[10px] text-purple-600 mt-2 font-bold">This Month</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md border-t-4 border-yellow-500">
-          <h3 className="text-gray-500 text-sm font-medium">Blockchain Txns</h3>
-          <p className="text-3xl font-bold">1,402</p>
+        <div className="bg-white p-6 rounded-lg shadow-md border-t-4 border-green-500">
+          <h3 className="text-gray-500 text-sm font-medium">Reunifications</h3>
+          <p className="text-3xl font-bold text-green-600">89</p>
+          <p className="text-[10px] text-green-600 mt-2 font-bold">Success Stories</p>
         </div>
       </div>
       
       {showMap ? (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Hotspot Density Map</h2>
+            <h2 className="text-xl font-bold">Network Hotspot Map</h2>
             <div className="flex gap-4 text-xs">
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500"></span> High Density</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-lime-500"></span> Moderate</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500"></span> Low</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500"></span> Critical Need</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-orange-500"></span> Shelter Needed</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500"></span> Medical Outreach</span>
             </div>
           </div>
           <HotspotMap records={mockRecords} />
-          <div className="mt-4 grid grid-cols-2 gap-4">
-            <div className="p-4 bg-red-50 rounded-lg border border-red-100">
-              <h4 className="text-red-800 font-bold text-sm">Identified Dangerous Areas</h4>
-              <p className="text-red-600 text-xs mt-1">Based on reports and density patterns: Sector 4, Railway Crossing.</p>
-            </div>
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-              <h4 className="text-blue-800 font-bold text-sm">Migration Trends</h4>
-              <p className="text-blue-600 text-xs mt-1">Increasing movement towards Central Market due to seasonal harvests.</p>
-            </div>
-          </div>
         </div>
       ) : (
         <div className="mt-10 bg-white p-6 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Recent Activity</h2>
-            <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded-full animate-pulse">Live AI Monitoring</span>
+            <h2 className="text-xl font-bold">Cross-Organization Activity</h2>
+            <div className="flex gap-2">
+              <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-1 rounded border border-blue-200 font-bold">NGO</span>
+              <span className="text-[10px] bg-red-100 text-red-800 px-2 py-1 rounded border border-red-200 font-bold">HOSPITAL</span>
+              <span className="text-[10px] bg-orange-100 text-orange-800 px-2 py-1 rounded border border-orange-200 font-bold">SHELTER</span>
+            </div>
           </div>
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Missing Check</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Blockchain Hash</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Child Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Latest Action</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Audit Trail</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-200 text-sm">
               <tr>
-                <td className="px-6 py-4 whitespace-nowrap font-medium">John Doe</td>
-                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Verified</span></td>
-                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">No Match</span></td>
-                <td className="px-6 py-4 whitespace-nowrap font-mono text-xs">0x7a2...f4e</td>
+                <td className="px-6 py-4 whitespace-nowrap font-medium text-blue-900">John Doe</td>
+                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Medical Checkup</span></td>
+                <td className="px-6 py-4 whitespace-nowrap font-medium">General Hospital</td>
+                <td className="px-6 py-4 whitespace-nowrap font-mono text-[10px] text-gray-400">0x7a2...f4e</td>
               </tr>
               <tr>
-                <td className="px-6 py-4 whitespace-nowrap font-medium">Samuel Omondi</td>
-                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Verified</span></td>
-                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Gov DB Match</span></td>
-                <td className="px-6 py-4 whitespace-nowrap font-mono text-xs">0x3c1...b2d</td>
+                <td className="px-6 py-4 whitespace-nowrap font-medium text-blue-900">Samuel Omondi</td>
+                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">Emergency Shelter</span></td>
+                <td className="px-6 py-4 whitespace-nowrap font-medium">Safe Haven Shelter</td>
+                <td className="px-6 py-4 whitespace-nowrap font-mono text-[10px] text-gray-400">0x3c1...b2d</td>
+              </tr>
+              <tr>
+                <td className="px-6 py-4 whitespace-nowrap font-medium text-blue-900">Aisha Kamau</td>
+                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Legal Documentation</span></td>
+                <td className="px-6 py-4 whitespace-nowrap font-medium">Gov Family Dept</td>
+                <td className="px-6 py-4 whitespace-nowrap font-mono text-[10px] text-gray-400">0x9d4...e1f</td>
               </tr>
             </tbody>
           </table>
@@ -121,6 +139,7 @@ const Registration = () => {
   const [offlineSaved, setOfflineSaved] = useState(false);
   const [locationData, setLocationData] = useState(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [selectedIntervention, setSelectedIntervention] = useState('None');
 
   const captureLocation = () => {
     setIsGettingLocation(true);
@@ -159,7 +178,8 @@ const Registration = () => {
       gender, 
       location, 
       biometricHash: `bio_${Date.now()}`,
-      geolocation: locationData
+      geolocation: locationData,
+      initialIntervention: selectedIntervention !== 'None' ? selectedIntervention : null
     };
 
     if (!isOnline) {
@@ -205,8 +225,8 @@ const Registration = () => {
         ) : (
           <>
             <CheckCircle2 className="mx-auto h-20 w-20 text-green-500 mb-4" />
-            <h1 className="text-3xl font-bold mb-2">Registration Successful</h1>
-            <p className="text-gray-600 mb-6">The record has been securely added to the blockchain.</p>
+            <h1 className="text-3xl font-bold mb-2">Network Registration Success</h1>
+            <p className="text-gray-600 mb-6">Record and initial intervention logged across the NGO Coordination Network.</p>
           </>
         )}
         <button onClick={() => { setIsSuccess(false); setOfflineSaved(false); setLocationData(null); }} className="bg-blue-600 text-white px-6 py-2 rounded-md font-bold">Register Another</button>
@@ -216,7 +236,7 @@ const Registration = () => {
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Register New Record</h1>
+      <h1 className="text-3xl font-bold mb-6">Register New Network Record</h1>
       
       {!isOnline && (
         <div className="mb-6 bg-orange-50 border-l-4 border-orange-500 p-4 rounded-md flex items-center gap-3">
@@ -258,67 +278,100 @@ const Registration = () => {
         </div>
       )}
 
-      <form className="bg-white p-8 rounded-lg shadow-md space-y-4" onSubmit={handleSubmit}>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Full Name</label>
-          <input type="text" required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="Child's name" />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
+      <form className="bg-white p-8 rounded-lg shadow-md space-y-6" onSubmit={handleSubmit}>
+        <div className="space-y-4">
+          <h3 className="font-bold text-gray-700 border-b pb-2 flex items-center gap-2">
+            <Users size={18} /> Basic Information
+          </h3>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Age</label>
-            <input type="number" required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+            <label className="block text-sm font-medium text-gray-700">Full Name</label>
+            <input type="text" required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="Child's name" />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Gender</label>
-            <select className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-              <option>Male</option>
-              <option>Female</option>
-              <option>Other</option>
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Age</label>
+              <input type="number" required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Gender</label>
+              <select className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+              </select>
+            </div>
           </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Location Description</label>
-          <input type="text" required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="Street, City" />
         </div>
 
-        {/* Geo-tagging Section */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-              <MapIcon size={16} /> GPS Geo-Tagging
-            </label>
-            <button 
-              type="button"
-              onClick={captureLocation}
-              disabled={isGettingLocation}
-              className={`text-xs font-bold flex items-center gap-1 px-3 py-1 rounded transition ${locationData ? 'bg-green-100 text-green-700' : 'bg-blue-600 text-white'}`}
-            >
-              <Crosshair size={12} className={isGettingLocation ? 'animate-spin' : ''} />
-              {isGettingLocation ? 'Capturing...' : locationData ? 'Location Captured' : 'Get Current GPS'}
-            </button>
+        <div className="space-y-4">
+          <h3 className="font-bold text-gray-700 border-b pb-2 flex items-center gap-2">
+            <Landmark size={18} /> Location & Coordination
+          </h3>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Location Description</label>
+            <input type="text" required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="Street, City" />
           </div>
-          {locationData ? (
-            <div className="text-[10px] font-mono text-gray-500 bg-white p-2 rounded border border-gray-100">
-              LAT: {locationData.lat.toFixed(6)} | LNG: {locationData.lng.toFixed(6)} | ACCURACY: {locationData.accuracy.toFixed(1)}m
+
+          {/* Geo-tagging Section */}
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                <MapIcon size={16} /> GPS Geo-Tagging
+              </label>
+              <button 
+                type="button"
+                onClick={captureLocation}
+                disabled={isGettingLocation}
+                className={`text-xs font-bold flex items-center gap-1 px-3 py-1 rounded transition ${locationData ? 'bg-green-100 text-green-700' : 'bg-blue-600 text-white'}`}
+              >
+                <Crosshair size={12} className={isGettingLocation ? 'animate-spin' : ''} />
+                {isGettingLocation ? 'Capturing...' : locationData ? 'Location Captured' : 'Get Current GPS'}
+              </button>
             </div>
-          ) : (
-            <p className="text-[10px] text-gray-400 italic">No GPS coordinates attached to this record yet.</p>
-          )}
+            {locationData ? (
+              <div className="text-[10px] font-mono text-gray-500 bg-white p-2 rounded border border-gray-100">
+                LAT: {locationData.lat.toFixed(6)} | LNG: {locationData.lng.toFixed(6)} | ACCURACY: {locationData.accuracy.toFixed(1)}m
+              </div>
+            ) : (
+              <p className="text-[10px] text-gray-400 italic">No GPS coordinates attached to this record yet.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="font-bold text-gray-700 border-b pb-2 flex items-center gap-2">
+            <HeartPulse size={18} /> Immediate Intervention
+          </h3>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Action Taken</label>
+            <select 
+              value={selectedIntervention}
+              onChange={(e) => setSelectedIntervention(e.target.value)}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            >
+              <option value="None">No Intervention Yet</option>
+              <option value="Medical">Medical Checkup Required</option>
+              <option value="Shelter">Referred to Shelter</option>
+              <option value="Food">Food & Water Provided</option>
+              <option value="Counseling">Trauma Counseling Started</option>
+              <option value="Legal">Legal Aid Requested</option>
+            </select>
+          </div>
         </div>
 
         <div className="border-2 border-dashed border-blue-200 p-6 rounded-lg text-center bg-blue-50">
           <ShieldCheck className="mx-auto h-12 w-12 text-blue-500 mb-2" />
-          <p className="text-sm text-blue-700 font-medium">Face Biometrics & Fingerprint Extraction</p>
-          <p className="text-xs text-blue-500 mb-4">AI will automatically check missing persons databases</p>
+          <p className="text-sm text-blue-700 font-medium text-center">Biometric Enrollment & Audit Trail Linking</p>
+          <p className="text-[10px] text-blue-500 mb-4">Blockchain will log this action for: <span className="font-bold">Red Cross (NGO)</span></p>
           <button type="button" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Start AI Capture</button>
         </div>
+        
         <button 
           type="submit" 
           disabled={isSubmitting}
           className={`w-full font-bold py-3 rounded-md transition duration-300 flex justify-center items-center gap-2 ${isSubmitting ? 'bg-gray-400' : isOnline ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-orange-600 hover:bg-orange-700 text-white'}`}
         >
-          {isSubmitting ? 'Processing...' : isOnline ? 'Submit to Blockchain' : 'Save Encrypted Locally'}
+          {isSubmitting ? 'Processing Audit Logs...' : isOnline ? 'Register & Notify Network' : 'Save Encrypted Locally'}
         </button>
       </form>
     </div>

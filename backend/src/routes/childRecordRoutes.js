@@ -4,11 +4,14 @@ const {
   registerChild,
   getRecords,
   verifyRecord,
+  addIntervention,
 } = require('../controllers/childRecordController');
 const { protect } = require('../middleware/authMiddleware');
+const { authorize } = require('../middleware/roleMiddleware');
 
-router.post('/', protect, registerChild);
-router.get('/', protect, getRecords);
-router.get('/verify/:biometricHash', protect, verifyRecord);
+router.post('/', protect, authorize('write'), registerChild);
+router.get('/', protect, authorize('read'), getRecords);
+router.get('/verify/:biometricHash', protect, authorize('read'), verifyRecord);
+router.post('/:id/intervention', protect, authorize('add_intervention'), addIntervention);
 
 module.exports = router;

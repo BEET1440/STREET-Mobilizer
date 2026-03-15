@@ -12,16 +12,46 @@ class MockBlockchain {
     this.records = new Map(); // biometricHash -> record
   }
 
-  createTransaction(record) {
+  createTransaction(record, actor = 'Unknown') {
     const transaction = {
       ...record,
       timestamp: Date.now(),
+      performedBy: actor,
       hash: this.calculateHash(record)
     };
     
     this.pendingTransactions.push(transaction);
     this.minePendingTransactions();
     return transaction.hash;
+  }
+
+  logAccess(recordId, actor, organization) {
+    const log = {
+      recordId,
+      action: 'ACCESS_VIEW',
+      actor,
+      organization,
+      timestamp: Date.now(),
+      hash: this.calculateHash({ recordId, actor, action: 'ACCESS_VIEW' })
+    };
+    this.pendingTransactions.push(log);
+    this.minePendingTransactions();
+    return log.hash;
+  }
+
+  logIntervention(recordId, intervention, actor, organization) {
+    const log = {
+      recordId,
+      action: 'INTERVENTION_ADDED',
+      interventionType: intervention.type,
+      actor,
+      organization,
+      timestamp: Date.now(),
+      hash: this.calculateHash({ recordId, intervention, actor })
+    };
+    this.pendingTransactions.push(log);
+    this.minePendingTransactions();
+    return log.hash;
   }
 
   calculateHash(record) {

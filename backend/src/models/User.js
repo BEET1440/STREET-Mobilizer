@@ -17,8 +17,17 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'field_officer'],
+    enum: ['admin', 'field_officer', 'social_worker', 'ngo_admin', 'gov_agent', 'shelter_staff', 'hospital_staff'],
     default: 'field_officer',
+  },
+  organization: {
+    name: { type: String, required: true },
+    type: { 
+      type: String, 
+      enum: ['NGO', 'Government', 'Shelter', 'Hospital', 'Other'],
+      required: true 
+    },
+    orgId: { type: String, unique: true }
   },
   createdAt: {
     type: Date,
