@@ -1,18 +1,26 @@
 const ChildRecord = require('../models/ChildRecord');
 const mockBlockchain = require('../../../blockchain/mock');
+const missingChildService = require('../services/missingChildService');
 
 // @desc    Register a new child record
 // @route   POST /api/records
 // @access  Private
 exports.registerChild = async (req, res) => {
   try {
-    const { name, age, gender, location, biometricHash } = req.body;
+    const { name, age, gender, location, biometricHash, faceImage } = req.body;
 
     // Check if child record with biometricHash already exists
     const recordExists = await ChildRecord.findOne({ biometricHash });
     if (recordExists) {
       return res.status(400).json({ message: 'Child record with this biometric data already exists.' });
     }
+
+    // 1. AI: Extract Face Biometrics
+    const faceBiometricTemplate = await missingChildService.extractFaceBiometrics(faceImage || name);
+
+    // 2. AI: Check for matches in Missing Persons Databases
+    const allInternalRecords = await ChildRecord.find();
+    const matchResult = await missingChildService.checkForMatch(faceBiometricTemplate, allInternalRecords);
 
     // Create a transaction on the mock blockchain
     const blockchainHash = mockBlockchain.createTransaction({
@@ -21,6 +29,8 @@ exports.registerChild = async (req, res) => {
       gender,
       location,
       biometricHash,
+      faceBiometricTemplate,
+      isMissing: matchResult.isMatch
     });
 
     const childRecord = await ChildRecord.create({
@@ -30,12 +40,24 @@ exports.registerChild = async (req, res) => {
       location,
       biometricHash,
       blockchainHash,
+      faceBiometricTemplate,
+      isMissing: matchResult.isMatch,
+      missingMatchDetails: matchResult.isMatch ? {
+        matchSource: matchResult.source,
+        matchConfidence: matchResult.confidence,
+        originalName: matchResult.originalName,
+        parentContact: matchResult.parentContact
+      } : undefined,
       registeredBy: req.user._id,
     });
 
     res.status(201).json({
       success: true,
       data: childRecord,
+      matchAlert: matchResult.isMatch ? {
+        message: `MATCH FOUND: This child potentially matches a missing person record from ${matchResult.source}!`,
+        details: matchResult
+      } : null
     });
   } catch (error) {
     res.status(500).json({

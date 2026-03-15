@@ -30,6 +30,19 @@ const childRecordSchema = new mongoose.Schema({
   blockchainHash: {
     type: String,
   },
+  isMissing: {
+    type: Boolean,
+    default: false,
+  },
+  missingMatchDetails: {
+    matchSource: String, // e.g., 'Gov_DB', 'Internal_AI'
+    matchConfidence: Number, // 0.0 to 1.0
+    originalName: String,
+    parentContact: String,
+  },
+  faceBiometricTemplate: {
+    type: String, // Store extracted feature vector (simulated as hash)
+  },
   registeredBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
