@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import HotspotMap from './HotspotMap';
 import RiskAssessmentBadge from './RiskAssessmentBadge';
+import StreetChildNetworkGraph from './StreetChildNetworkGraph';
 
 const NationalCommandCenter = () => {
   const [activeAlerts, setActiveAlerts] = useState([
@@ -148,7 +149,6 @@ const NationalCommandCenter = () => {
             </div>
           </div>
 
-          {/* Coordination Log */}
           <div className="bg-white p-6 rounded-3xl shadow-md border border-slate-100">
             <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
               <Activity className="text-blue-600" /> Real-Time NGO Coordination Log
@@ -177,6 +177,8 @@ const NationalCommandCenter = () => {
               ))}
             </div>
           </div>
+
+          <StreetChildNetworkGraph />
         </div>
 
         {/* Sidebar Intelligence Panels */}
