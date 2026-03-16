@@ -1,13 +1,17 @@
 const ChildRecord = require('../models/ChildRecord');
 const mockBlockchain = require('../../../blockchain/mock');
 const missingChildService = require('../services/missingChildService');
+const riskAssessmentService = require('../services/riskAssessmentService');
 
 // @desc    Register a new child record
 // @route   POST /api/records
 // @access  Private
 exports.registerChild = async (req, res) => {
   try {
-    const { name, age, gender, location, biometricHash, faceImage } = req.body;
+    const { 
+      name, age, gender, location, biometricHash, faceImage, 
+      geolocation, timeOnStreets, groupAssociations, healthCondition 
+    } = req.body;
 
     // Check if child record with biometricHash already exists
     const recordExists = await ChildRecord.findOne({ biometricHash });
@@ -22,6 +26,11 @@ exports.registerChild = async (req, res) => {
     const allInternalRecords = await ChildRecord.find();
     const matchResult = await missingChildService.checkForMatch(faceBiometricTemplate, allInternalRecords);
 
+    // 3. AI: Assess Risk Level
+    const riskAssessment = await riskAssessmentService.assessRisk({
+      age, geolocation, timeOnStreets, groupAssociations, healthCondition
+    });
+
     // Create a transaction on the mock blockchain
     const blockchainHash = mockBlockchain.createTransaction({
       name,
@@ -30,18 +39,33 @@ exports.registerChild = async (req, res) => {
       location,
       biometricHash,
       faceBiometricTemplate,
-      isMissing: matchResult.isMatch
+      isMissing: matchResult.isMatch,
+      riskLevel: riskAssessment.level
     }, req.user.email);
+
+    // Initial Timeline Event
+    const initialEvent = {
+      eventType: 'IDENTIFIED',
+      description: `Child identified and registered at ${location}`,
+      organization: req.user.organization?.name || 'Unknown',
+      blockchainHash
+    };
 
     const childRecord = await ChildRecord.create({
       name,
       age,
       gender,
       location,
+      geolocation,
+      timeOnStreets,
+      groupAssociations,
+      healthCondition,
       biometricHash,
       blockchainHash,
       faceBiometricTemplate,
       isMissing: matchResult.isMatch,
+      riskAssessment,
+      timeline: [initialEvent],
       missingMatchDetails: matchResult.isMatch ? {
         matchSource: matchResult.source,
         matchConfidence: matchResult.confidence,
@@ -53,7 +77,7 @@ exports.registerChild = async (req, res) => {
         action: 'REGISTERED',
         performedBy: req.user._id,
         organization: req.user.organization?.name || 'Unknown',
-        details: 'Initial registration'
+        details: 'Initial registration and risk assessment'
       }]
     });
 
@@ -173,6 +197,57 @@ exports.addIntervention = async (req, res) => {
       performedBy: req.user._id,
       organization: req.user.organization?.name || 'Unknown',
       details: `Added ${type} intervention`
+    });
+
+    await record.save();
+
+    res.status(201).json({
+      success: true,
+      data: record
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Add event to child life timeline
+// @route   POST /api/records/:id/timeline
+// @access  Private
+exports.addTimelineEvent = async (req, res) => {
+  try {
+    const { eventType, description } = req.body;
+    const record = await ChildRecord.findById(req.params.id);
+
+    if (!record) {
+      return res.status(404).json({ message: 'Child record not found' });
+    }
+
+    // Log to blockchain
+    const blockchainHash = mockBlockchain.createTransaction({
+      recordId: record._id,
+      eventType,
+      description,
+      timestamp: Date.now()
+    }, req.user.email);
+
+    const timelineEvent = {
+      eventType,
+      description,
+      organization: req.user.organization?.name || 'Unknown',
+      blockchainHash
+    };
+
+    record.timeline.push(timelineEvent);
+    
+    // Add to audit log
+    record.auditLogs.push({
+      action: 'UPDATED',
+      performedBy: req.user._id,
+      organization: req.user.organization?.name || 'Unknown',
+      details: `Timeline event added: ${eventType}`
     });
 
     await record.save();

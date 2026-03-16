@@ -22,6 +22,47 @@ const childRecordSchema = new mongoose.Schema({
     lng: Number,
     accuracy: Number,
   },
+  timeOnStreets: {
+    type: Number, // in months
+    default: 0
+  },
+  groupAssociations: {
+    type: String,
+    enum: ['none', 'street_family', 'gang', 'organized_group', 'unknown'],
+    default: 'unknown'
+  },
+  healthCondition: {
+    type: String,
+    enum: ['healthy', 'minor_issues', 'chronic_illness', 'critical', 'malnourished'],
+    default: 'healthy'
+  },
+  riskAssessment: {
+    score: { type: Number, min: 0, max: 100 },
+    level: { type: String, enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] },
+    reasons: [String],
+    lastAssessed: { type: Date, default: Date.now }
+  },
+  timeline: [
+    {
+      eventType: {
+        type: String,
+        enum: [
+          'IDENTIFIED', 
+          'HEALTH_CHECK', 
+          'SHELTER_PLACEMENT', 
+          'SCHOOL_ENROLLMENT', 
+          'FAMILY_TRACED', 
+          'REINTEGRATION',
+          'FOLLOW_UP'
+        ],
+        required: true
+      },
+      description: String,
+      organization: String,
+      timestamp: { type: Date, default: Date.now },
+      blockchainHash: String
+    }
+  ],
   biometricHash: {
     type: String,
     required: true,

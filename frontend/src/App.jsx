@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { LayoutDashboard, UserPlus, Search, LogOut, ShieldCheck, Database, AlertCircle, CheckCircle2, Wifi, WifiOff, RefreshCcw, Save, Map as MapIcon, Crosshair, Users, Activity, HeartPulse, Building2, Landmark, Stethoscope } from 'lucide-react';
+import { LayoutDashboard, UserPlus, Search, LogOut, ShieldCheck, Database, AlertCircle, CheckCircle2, Wifi, WifiOff, RefreshCcw, Save, Map as MapIcon, Crosshair, Users, Activity, HeartPulse, Building2, Landmark, Stethoscope, ChevronRight, History, ShieldAlert } from 'lucide-react';
 import { useOffline } from './hooks/useOffline';
 import { saveOfflineRecord } from './utils/offlineStorage';
 import HotspotMap from './components/HotspotMap';
+import ChildTimeline from './components/ChildTimeline';
+import RiskAssessmentBadge from './components/RiskAssessmentBadge';
 
 // Organization/Role config
 const ORG_CONFIG = { 
@@ -18,12 +20,68 @@ const Dashboard = () => {
   const { offlineCount, isOnline } = useOffline();
   const [showMap, setShowMap] = useState(false);
   const [activeOrg, setActiveOrg] = useState('Red Cross (NGO)');
+  const [selectedChild, setSelectedChild] = useState(null);
   
-  // Mock records for map visualization
+  // Enhanced mock records with risk assessment and timeline
   const mockRecords = [
-    { name: 'John Doe', location: 'Central Park', geolocation: { lat: -1.2833, lng: 36.8167 }, blockchainHash: '0x7a2...f4e', interventions: 3 },
-    { name: 'Samuel Omondi', location: 'Kibera', geolocation: { lat: -1.3000, lng: 36.7800 }, blockchainHash: '0x3c1...b2d', interventions: 1 },
-    { name: 'Aisha Kamau', location: 'Eastleigh', geolocation: { lat: -1.2750, lng: 36.8500 }, blockchainHash: '0x9d4...e1f', interventions: 5 },
+    { 
+      id: 1, 
+      name: 'John Doe', 
+      location: 'Central Park', 
+      geolocation: { lat: -1.2833, lng: 36.8167 }, 
+      blockchainHash: '0x7a2...f4e', 
+      interventions: 3,
+      age: 8,
+      riskAssessment: {
+        score: 85,
+        level: 'CRITICAL',
+        reasons: ['No guardian', 'Under 10 years', 'Near trafficking hotspot'],
+        trend: 'increasing'
+      },
+      timeline: [
+        { eventType: 'IDENTIFIED', description: 'Found sleeping near Central Park benches', organization: 'Red Cross (NGO)', timestamp: '2026-03-10', blockchainHash: '0xabc...123' },
+        { eventType: 'HEALTH_CHECK', description: 'Minor respiratory infection diagnosed', organization: 'General Hospital', timestamp: '2026-03-11', blockchainHash: '0xdef...456' },
+        { eventType: 'SHELTER_PLACEMENT', description: 'Placed in Safe Haven temporary shelter', organization: 'Safe Haven', timestamp: '2026-03-12', blockchainHash: '0xghi...789' },
+      ]
+    },
+    { 
+      id: 2, 
+      name: 'Samuel Omondi', 
+      location: 'Kibera', 
+      geolocation: { lat: -1.3000, lng: 36.7800 }, 
+      blockchainHash: '0x3c1...b2d', 
+      interventions: 1,
+      age: 14,
+      riskAssessment: {
+        score: 45,
+        level: 'MEDIUM',
+        reasons: ['Lacks official ID', 'Limited access to clean water'],
+        trend: 'stabilizing'
+      },
+      timeline: [
+        { eventType: 'IDENTIFIED', description: 'Identified during Kibera outreach', organization: 'Red Cross (NGO)', timestamp: '2026-03-14', blockchainHash: '0xjkl...012' },
+      ]
+    },
+    { 
+      id: 3, 
+      name: 'Aisha Kamau', 
+      location: 'Eastleigh', 
+      geolocation: { lat: -1.2750, lng: 36.8500 }, 
+      blockchainHash: '0x9d4...e1f', 
+      interventions: 5,
+      age: 11,
+      riskAssessment: {
+        score: 65,
+        level: 'HIGH',
+        reasons: ['History of exploitation', 'Multiple missing reports'],
+        trend: 'increasing'
+      },
+      timeline: [
+        { eventType: 'IDENTIFIED', description: 'Found at Eastleigh market', organization: 'Red Cross (NGO)', timestamp: '2026-02-15', blockchainHash: '0xmno...345' },
+        { eventType: 'SHELTER_PLACEMENT', description: 'Transferred to protection unit', organization: 'Gov Family Dept', timestamp: '2026-02-20', blockchainHash: '0xpqr...678' },
+        { eventType: 'SCHOOL_ENROLLMENT', description: 'Enrolled in bridge education program', organization: 'Education First NGO', timestamp: '2026-03-01', blockchainHash: '0xstu...901' },
+      ]
+    },
   ];
   
   return (
@@ -86,45 +144,77 @@ const Dashboard = () => {
           <HotspotMap records={mockRecords} />
         </div>
       ) : (
-        <div className="mt-10 bg-white p-6 rounded-lg shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Cross-Organization Activity</h2>
-            <div className="flex gap-2">
-              <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-1 rounded border border-blue-200 font-bold">NGO</span>
-              <span className="text-[10px] bg-red-100 text-red-800 px-2 py-1 rounded border border-red-200 font-bold">HOSPITAL</span>
-              <span className="text-[10px] bg-orange-100 text-orange-800 px-2 py-1 rounded border border-orange-200 font-bold">SHELTER</span>
+        <div className="flex gap-6">
+          <div className={`transition-all duration-300 ${selectedChild ? 'w-2/3' : 'w-full'} bg-white p-6 rounded-lg shadow-md`}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Cross-Organization Activity</h2>
+              <div className="flex gap-2">
+                <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-1 rounded border border-blue-200 font-bold">NGO</span>
+                <span className="text-[10px] bg-red-100 text-red-800 px-2 py-1 rounded border border-red-200 font-bold">HOSPITAL</span>
+                <span className="text-[10px] bg-orange-100 text-orange-800 px-2 py-1 rounded border border-orange-200 font-bold">SHELTER</span>
+              </div>
             </div>
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Child Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Level</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Audit Trail</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200 text-sm">
+                {mockRecords.map(record => (
+                  <tr 
+                    key={record.id} 
+                    className={`cursor-pointer hover:bg-blue-50 transition ${selectedChild?.id === record.id ? 'bg-blue-50 border-l-4 border-blue-600' : ''}`}
+                    onClick={() => setSelectedChild(record)}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap font-medium text-blue-900">
+                      <div className="flex items-center gap-2">
+                        {record.name}
+                        {record.riskAssessment.level === 'CRITICAL' && <ShieldAlert size={14} className="text-red-600 animate-pulse" />}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 inline-flex text-[10px] leading-5 font-bold rounded-full border ${
+                        record.riskAssessment.level === 'CRITICAL' ? 'bg-red-100 text-red-800 border-red-200' : 
+                        record.riskAssessment.level === 'HIGH' ? 'bg-orange-100 text-orange-800 border-orange-200' :
+                        'bg-green-100 text-green-800 border-green-200'
+                      }`}>
+                        {record.riskAssessment.level}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-600">Red Cross (NGO)</td>
+                    <td className="px-6 py-4 whitespace-nowrap font-mono text-[10px] text-gray-400">{record.blockchainHash}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead>
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Child Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Latest Action</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Audit Trail</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200 text-sm">
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap font-medium text-blue-900">John Doe</td>
-                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Medical Checkup</span></td>
-                <td className="px-6 py-4 whitespace-nowrap font-medium">General Hospital</td>
-                <td className="px-6 py-4 whitespace-nowrap font-mono text-[10px] text-gray-400">0x7a2...f4e</td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap font-medium text-blue-900">Samuel Omondi</td>
-                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">Emergency Shelter</span></td>
-                <td className="px-6 py-4 whitespace-nowrap font-medium">Safe Haven Shelter</td>
-                <td className="px-6 py-4 whitespace-nowrap font-mono text-[10px] text-gray-400">0x3c1...b2d</td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap font-medium text-blue-900">Aisha Kamau</td>
-                <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Legal Documentation</span></td>
-                <td className="px-6 py-4 whitespace-nowrap font-medium">Gov Family Dept</td>
-                <td className="px-6 py-4 whitespace-nowrap font-mono text-[10px] text-gray-400">0x9d4...e1f</td>
-              </tr>
-            </tbody>
-          </table>
+
+          {selectedChild && (
+            <div className="w-1/3 space-y-6 animate-in slide-in-from-right duration-300">
+              {/* Risk Panel */}
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    <ShieldAlert size={20} className="text-blue-600" /> AI Risk Profile
+                  </h3>
+                  <button onClick={() => setSelectedChild(null)} className="text-gray-400 hover:text-gray-600">×</button>
+                </div>
+                <RiskAssessmentBadge assessment={selectedChild.riskAssessment} />
+              </div>
+
+              {/* Timeline Panel */}
+              <div className="bg-white p-6 rounded-lg shadow-md max-h-[500px] overflow-y-auto">
+                <h3 className="text-lg font-bold flex items-center gap-2 mb-6">
+                  <History size={20} className="text-blue-600" /> Life Progress Timeline
+                </h3>
+                <ChildTimeline events={selectedChild.timeline} />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
