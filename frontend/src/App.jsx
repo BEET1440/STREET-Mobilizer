@@ -12,6 +12,8 @@ import PhotoTimeline from './components/PhotoTimeline';
 import RescueAlert from './components/RescueAlert';
 import ShelterAvailability from './components/ShelterAvailability';
 import GuardianVerificationForm from './components/GuardianVerificationForm';
+import DataIntegrityVerifier from './components/DataIntegrityVerifier';
+import PublicTransparencyPortal from './components/PublicTransparencyPortal';
 
 // Organization/Role config
 const ORG_CONFIG = { 
@@ -801,10 +803,13 @@ function App() {
               <LayoutDashboard size={20} /> Dashboard
             </Link>
             <Link to="/register" className="flex items-center gap-3 px-6 py-4 hover:bg-blue-800 transition">
-              <UserPlus size={20} /> Register Child
+              <UserPlus size={20} /> New Registration
             </Link>
             <Link to="/verify" className="flex items-center gap-3 px-6 py-4 hover:bg-blue-800 transition">
-              <Search size={20} /> Verify Record
+              <ShieldCheck size={20} /> Verify Record
+            </Link>
+            <Link to="/public" className="flex items-center gap-3 px-6 py-4 hover:bg-blue-800 transition">
+              <Search size={20} /> Public Portal
             </Link>
           </nav>
           
@@ -866,6 +871,7 @@ function App() {
             <Route path="/" element={<Dashboard onRescueAlert={setActiveAlert} />} />
             <Route path="/register" element={<Registration onRescueAlert={setActiveAlert} />} />
             <Route path="/verify" element={<Verification />} />
+            <Route path="/public" element={<PublicTransparencyPortal />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>

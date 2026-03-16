@@ -9,10 +9,13 @@ const {
   recordAidDistribution,
   addPhotoEncounter,
   verifyGuardian,
+  getRecordIntegrity,
+  getPublicStats,
 } = require('../controllers/childRecordController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
 
+router.get('/public/stats', getPublicStats);
 router.post('/', protect, authorize('write'), registerChild);
 router.get('/', protect, authorize('read'), getRecords);
 router.get('/verify/:biometricHash', protect, authorize('read'), verifyRecord);
