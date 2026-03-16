@@ -4,6 +4,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const childRecordRoutes = require('./routes/childRecordRoutes');
 const userRoutes = require('./routes/userRoutes');
+const shelterRoutes = require('./routes/shelterRoutes');
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 // Routes
 app.use('/api/records', childRecordRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/shelters', shelterRoutes);
 
 app.get('/', (req, res) => {
   res.send('Street Mobilizer API is running...');

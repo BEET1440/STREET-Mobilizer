@@ -10,6 +10,7 @@ import AidDistributionForm from './components/AidDistributionForm';
 import DigitalIDCard from './components/DigitalIDCard';
 import PhotoTimeline from './components/PhotoTimeline';
 import RescueAlert from './components/RescueAlert';
+import ShelterAvailability from './components/ShelterAvailability';
 
 // Organization/Role config
 const ORG_CONFIG = { 
@@ -362,6 +363,14 @@ const Registration = ({ onRescueAlert }) => {
   const [locationData, setLocationData] = useState(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [selectedIntervention, setSelectedIntervention] = useState('None');
+  const [selectedShelter, setSelectedShelter] = useState(null);
+
+  // Mock shelter data for the demo
+  const mockShelters = [
+    { id: 1, name: 'Safe Haven Center', location: 'Industrial Area D', capacity: 50, occupied: 45, available: 5, updatedAt: new Date().toISOString() },
+    { id: 2, name: 'Hope Rescue Center', location: 'Transit Hub C', capacity: 30, occupied: 28, available: 2, updatedAt: new Date().toISOString() },
+    { id: 3, name: 'Youth Oasis Shelter', location: 'Kibera Outpost', capacity: 100, occupied: 12, available: 88, updatedAt: new Date().toISOString() },
+  ];
 
   const captureLocation = () => {
     setIsGettingLocation(true);
@@ -597,20 +606,45 @@ const Registration = ({ onRescueAlert }) => {
           <h3 className="font-bold text-gray-700 border-b pb-2 flex items-center gap-2">
             <HeartPulse size={18} /> Immediate Intervention
           </h3>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Action Taken</label>
-            <select 
-              value={selectedIntervention}
-              onChange={(e) => setSelectedIntervention(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-            >
-              <option value="None">No Intervention Yet</option>
-              <option value="Medical">Medical Checkup Required</option>
-              <option value="Shelter">Referred to Shelter</option>
-              <option value="Food">Food & Water Provided</option>
-              <option value="Counseling">Trauma Counseling Started</option>
-              <option value="Legal">Legal Aid Requested</option>
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Action Taken</label>
+              <select 
+                value={selectedIntervention}
+                onChange={(e) => setSelectedIntervention(e.target.value)}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"
+              >
+                <option value="None">No Intervention Yet</option>
+                <option value="Medical">Medical Checkup Required</option>
+                <option value="Shelter">Referred to Shelter</option>
+                <option value="Food">Food & Water Provided</option>
+                <option value="Counseling">Trauma Counseling Started</option>
+                <option value="Legal">Legal Aid Requested</option>
+              </select>
+
+              {selectedIntervention === 'Shelter' && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <h4 className="text-xs font-black text-blue-800 uppercase mb-2">Selected Placement</h4>
+                  {selectedShelter ? (
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-bold text-blue-900">{selectedShelter.name}</p>
+                        <p className="text-[10px] text-blue-600">{selectedShelter.location}</p>
+                      </div>
+                      <button onClick={() => setSelectedShelter(null)} className="text-xs text-red-600 font-bold uppercase underline">Change</button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-blue-600 italic">Please select a shelter from the availability list.</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {selectedIntervention === 'Shelter' && (
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <ShelterAvailability shelters={mockShelters} onSelect={(s) => setSelectedShelter(s)} />
+              </div>
+            )}
           </div>
         </div>
 
