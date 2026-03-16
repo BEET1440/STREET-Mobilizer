@@ -2,6 +2,7 @@ const ChildRecord = require('../models/ChildRecord');
 const mockBlockchain = require('../../../blockchain/mock');
 const missingChildService = require('../services/missingChildService');
 const riskAssessmentService = require('../services/riskAssessmentService');
+const rescueAlertService = require('../services/rescueAlertService');
 
 // Helper to generate SM-ID (Temporary Digital ID)
 // Format: SM-KE-2026-004321
@@ -49,6 +50,13 @@ exports.registerChild = async (req, res) => {
     // 4. Generate Temporary Digital ID (SM-ID)
     const smId = await generateSmId();
 
+    // 5. Check for Rescue Alerts (High-Risk Zones)
+    const riskZone = await rescueAlertService.checkRiskZone(geolocation, location);
+    let rescueAlert = null;
+    if (riskZone) {
+      rescueAlert = await rescueAlertService.triggerRescueAlert({ _id: 'NEW', smId, name }, riskZone, { location });
+    }
+
     // Create a transaction on the mock blockchain
     const blockchainHash = mockBlockchain.createTransaction({
       smId,
@@ -59,13 +67,14 @@ exports.registerChild = async (req, res) => {
       biometricHash,
       faceBiometricTemplate,
       isMissing: matchResult.isMatch,
-      riskLevel: riskAssessment.level
+      riskLevel: riskAssessment.level,
+      rescueAlertTriggered: !!rescueAlert
     }, req.user.email);
 
     // Initial Timeline Event
     const initialEvent = {
       eventType: 'IDENTIFIED',
-      description: `Child identified and registered at ${location} with Temporary ID: ${smId}`,
+      description: `Child identified and registered at ${location} with Temporary ID: ${smId}.${rescueAlert ? ' CRITICAL RESCUE ALERT TRIGGERED.' : ''}`,
       organization: req.user.organization?.name || 'Unknown',
       blockchainHash
     };
@@ -97,7 +106,7 @@ exports.registerChild = async (req, res) => {
         action: 'REGISTERED',
         performedBy: req.user._id,
         organization: req.user.organization?.name || 'Unknown',
-        details: `Initial registration and risk assessment. Assigned SM-ID: ${smId}`
+        details: `Initial registration and risk assessment. Assigned SM-ID: ${smId}.${rescueAlert ? ' RESCUE ALERT DISPATCHED.' : ''}`
       }]
     });
 
@@ -107,7 +116,8 @@ exports.registerChild = async (req, res) => {
       matchAlert: matchResult.isMatch ? {
         message: `MATCH FOUND: This child potentially matches a missing person record from ${matchResult.source}!`,
         details: matchResult
-      } : null
+      } : null,
+      rescueAlert
     });
   } catch (error) {
     res.status(500).json({
@@ -311,13 +321,21 @@ exports.addPhotoEncounter = async (req, res) => {
     // Simulate hashing the photo for on-chain integrity
     const photoHash = `phash_${Math.random().toString(16).slice(2, 18)}`;
 
+    // Check for Rescue Alerts in new location
+    const riskZone = await rescueAlertService.checkRiskZone(null, location);
+    let rescueAlert = null;
+    if (riskZone) {
+      rescueAlert = await rescueAlertService.triggerRescueAlert(record, riskZone, { location });
+    }
+
     // Create a transaction on the mock blockchain for the photo encounter
     const blockchainHash = mockBlockchain.createTransaction({
       recordId: record._id,
       photoHash,
       type: 'PHOTO_ENCOUNTER',
       location,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      rescueAlertTriggered: !!rescueAlert
     }, req.user.email);
 
     const photoEntry = {
@@ -336,13 +354,13 @@ exports.addPhotoEncounter = async (req, res) => {
       action: 'UPDATED',
       performedBy: req.user._id,
       organization: req.user.organization?.name || 'Unknown',
-      details: `New photo encounter added. Photo hash: ${photoHash}`
+      details: `New photo encounter added. Photo hash: ${photoHash}.${rescueAlert ? ' RESCUE ALERT TRIGGERED.' : ''}`
     });
 
     // Also add to the general timeline for summary
     record.timeline.push({
       eventType: 'FOLLOW_UP',
-      description: `New photo encounter recorded: ${caption}`,
+      description: `New photo encounter recorded: ${caption}.${rescueAlert ? ' CRITICAL RESCUE ALERT TRIGGERED.' : ''}`,
       organization: req.user.organization?.name || 'Unknown',
       blockchainHash
     });
@@ -351,7 +369,8 @@ exports.addPhotoEncounter = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: record
+      data: record,
+      rescueAlert
     });
   } catch (error) {
     res.status(500).json({

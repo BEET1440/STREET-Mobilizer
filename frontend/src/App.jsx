@@ -9,6 +9,7 @@ import RiskAssessmentBadge from './components/RiskAssessmentBadge';
 import AidDistributionForm from './components/AidDistributionForm';
 import DigitalIDCard from './components/DigitalIDCard';
 import PhotoTimeline from './components/PhotoTimeline';
+import RescueAlert from './components/RescueAlert';
 
 // Organization/Role config
 const ORG_CONFIG = { 
@@ -19,12 +20,13 @@ const ORG_CONFIG = {
 };
 
 // Mock components (will implement properly later)
-const Dashboard = () => {
+const Dashboard = ({ onRescueAlert }) => {
   const { offlineCount, isOnline } = useOffline();
   const [showMap, setShowMap] = useState(false);
   const [activeOrg, setActiveOrg] = useState('Red Cross (NGO)');
   const [selectedChild, setSelectedChild] = useState(null);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'aid', or 'photos'
+  const [activeAlert, setActiveAlert] = useState(null);
   
   // Enhanced mock records with risk assessment, timeline, aid, and photos
   const mockRecords = [
@@ -112,6 +114,8 @@ const Dashboard = () => {
   
   return (
     <div className="p-6">
+      <RescueAlert alert={activeAlert} onClose={() => setActiveAlert(null)} />
+      
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Coordination Dashboard</h1>
@@ -321,6 +325,20 @@ const Dashboard = () => {
                     photos={selectedChild.photoTimeline || []} 
                     childId={selectedChild.id}
                     onPhotoAdded={(newPhoto) => {
+                      // Simulate Rescue Alert for "Border Crossing" in Photo Encounter
+                      if (newPhoto.location.toLowerCase().includes('border crossing')) {
+                        onRescueAlert({
+                          alertId: `ALRT-${Math.random().toString(16).slice(2, 10).toUpperCase()}`,
+                          smId: selectedChild.smId,
+                          childName: selectedChild.name,
+                          riskLevel: 'CRITICAL',
+                          zoneName: 'Border Crossing A',
+                          zoneType: 'trafficking_hotspot',
+                          location: newPhoto.location,
+                          notifiedOrgs: ['Red Cross', 'Local Police', 'Save the Children'],
+                          instructions: 'IMMEDIATE DISPATCH: Child spotted in high-risk border zone during photo encounter. Dispatch extraction team.'
+                        });
+                      }
                       selectedChild.photoTimeline = [newPhoto, ...selectedChild.photoTimeline];
                       setSelectedChild({...selectedChild});
                     }}
@@ -335,7 +353,7 @@ const Dashboard = () => {
   );
 };
 
-const Registration = () => {
+const Registration = ({ onRescueAlert }) => {
   const { isOnline } = useOffline();
   const [matchAlert, setMatchAlert] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -403,6 +421,21 @@ const Registration = () => {
     setTimeout(() => {
       setIsSubmitting(false);
       
+      // Simulate Rescue Alert for "Border Crossing"
+      if (location.toLowerCase().includes('border crossing')) {
+        onRescueAlert({
+          alertId: `ALRT-${Math.random().toString(16).slice(2, 10).toUpperCase()}`,
+          smId: recordData.smId,
+          childName: recordData.name,
+          riskLevel: 'CRITICAL',
+          zoneName: 'Border Crossing A',
+          zoneType: 'trafficking_hotspot',
+          location: location,
+          notifiedOrgs: ['Red Cross', 'Local Police', 'Save the Children'],
+          instructions: 'IMMEDIATE DISPATCH: Child identified in high-risk border zone. Dispatch extraction team.'
+        });
+      }
+
       // Simulate a match for testing (e.g., if name is Samuel Omondi)
       if (name.toLowerCase().includes('samuel')) {
         setMatchAlert({
@@ -722,8 +755,8 @@ function App() {
           </header>
           
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/register" element={<Registration />} />
+            <Route path="/" element={<Dashboard onRescueAlert={setActiveAlert} />} />
+            <Route path="/register" element={<Registration onRescueAlert={setActiveAlert} />} />
             <Route path="/verify" element={<Verification />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
