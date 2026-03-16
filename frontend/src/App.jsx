@@ -8,6 +8,7 @@ import ChildTimeline from './components/ChildTimeline';
 import RiskAssessmentBadge from './components/RiskAssessmentBadge';
 import AidDistributionForm from './components/AidDistributionForm';
 import DigitalIDCard from './components/DigitalIDCard';
+import PhotoTimeline from './components/PhotoTimeline';
 
 // Organization/Role config
 const ORG_CONFIG = { 
@@ -23,9 +24,9 @@ const Dashboard = () => {
   const [showMap, setShowMap] = useState(false);
   const [activeOrg, setActiveOrg] = useState('Red Cross (NGO)');
   const [selectedChild, setSelectedChild] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' or 'aid'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'aid', or 'photos'
   
-  // Enhanced mock records with risk assessment, timeline, and aid
+  // Enhanced mock records with risk assessment, timeline, aid, and photos
   const mockRecords = [
     { 
       id: 1, 
@@ -50,6 +51,10 @@ const Dashboard = () => {
       aidDistributions: [
         { itemType: 'food', quantity: '2kg Rice & Beans', description: 'Weekly food basket', organization: 'Red Cross (NGO)', timestamp: '2026-03-12', blockchainHash: '0x123...aid1' },
         { itemType: 'clothing', quantity: '1 Blanket', description: 'Cold weather support', organization: 'Safe Haven', timestamp: '2026-03-13', blockchainHash: '0x456...aid2' }
+      ],
+      photoTimeline: [
+        { photoUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1974&auto=format&fit=crop', photoHash: 'phash_001', caption: 'Initial encounter photo', location: 'Central Park', organization: 'Red Cross (NGO)', timestamp: '2026-03-10', blockchainHash: '0xabc...p1' },
+        { photoUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=1974&auto=format&fit=crop', photoHash: 'phash_002', caption: 'After 2 days in shelter', location: 'Safe Haven', organization: 'Safe Haven', timestamp: '2026-03-12', blockchainHash: '0xdef...p2' }
       ]
     },
     { 
@@ -70,7 +75,10 @@ const Dashboard = () => {
       timeline: [
         { eventType: 'IDENTIFIED', description: 'Identified during Kibera outreach. Assigned SM-ID: SM-KE-2026-009876', organization: 'Red Cross (NGO)', timestamp: '2026-03-14', blockchainHash: '0xjkl...012' },
       ],
-      aidDistributions: []
+      aidDistributions: [],
+      photoTimeline: [
+        { photoUrl: 'https://images.unsplash.com/photo-1503443207922-dff7d543fd0e?q=80&w=1854&auto=format&fit=crop', photoHash: 'phash_s1', caption: 'Registered at Kibera outpost', location: 'Kibera', organization: 'Red Cross (NGO)', timestamp: '2026-03-14', blockchainHash: '0xjkl...p3' }
+      ]
     },
     { 
       id: 3, 
@@ -94,6 +102,10 @@ const Dashboard = () => {
       ],
       aidDistributions: [
         { itemType: 'school_supplies', quantity: '1 Backpack Kit', description: 'Stationery and uniform for bridge program', organization: 'Education First NGO', timestamp: '2026-03-02', blockchainHash: '0x789...aid3' }
+      ],
+      photoTimeline: [
+        { photoUrl: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?q=80&w=2080&auto=format&fit=crop', photoHash: 'phash_a1', caption: 'Identification photo', location: 'Eastleigh market', organization: 'Red Cross (NGO)', timestamp: '2026-02-15', blockchainHash: '0xmno...p4' },
+        { photoUrl: 'https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?q=80&w=2038&auto=format&fit=crop', photoHash: 'phash_a2', caption: 'Enrollment in bridge program', location: 'Education First HQ', organization: 'Education First NGO', timestamp: '2026-03-01', blockchainHash: '0xstu...p5' }
       ]
     },
   ];
@@ -224,6 +236,12 @@ const Dashboard = () => {
                 >
                   Aid Tracking
                 </button>
+                <button 
+                  onClick={() => setActiveTab('photos')}
+                  className={`flex-1 py-2 text-xs font-bold rounded-md transition ${activeTab === 'photos' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                >
+                  Photos
+                </button>
               </div>
 
               {activeTab === 'overview' ? (
@@ -252,7 +270,7 @@ const Dashboard = () => {
                     <ChildTimeline events={selectedChild.timeline} />
                   </div>
                 </>
-              ) : (
+              ) : activeTab === 'aid' ? (
                 <>
                   {/* Aid Distribution Form */}
                   <AidDistributionForm 
@@ -297,6 +315,17 @@ const Dashboard = () => {
                     )}
                   </div>
                 </>
+              ) : (
+                <div className="max-h-[800px] overflow-y-auto pr-2">
+                  <PhotoTimeline 
+                    photos={selectedChild.photoTimeline || []} 
+                    childId={selectedChild.id}
+                    onPhotoAdded={(newPhoto) => {
+                      selectedChild.photoTimeline = [newPhoto, ...selectedChild.photoTimeline];
+                      setSelectedChild({...selectedChild});
+                    }}
+                  />
+                </div>
               )}
             </div>
           )}

@@ -122,6 +122,17 @@ const childRecordSchema = new mongoose.Schema({
       blockchainHash: String
     }
   ],
+  photoTimeline: [
+    {
+      photoUrl: String, // Reference to off-chain storage (e.g. S3, Cloudinary)
+      photoHash: String, // Hash of the photo stored on the blockchain
+      caption: String,
+      location: String,
+      organization: String,
+      timestamp: { type: Date, default: Date.now },
+      blockchainHash: String // Transaction hash
+    }
+  ],
   auditLogs: [
     {
       action: { type: String, enum: ['REGISTERED', 'VIEWED', 'UPDATED', 'INTERVENTION_ADDED', 'AID_DISTRIBUTED'], required: true },

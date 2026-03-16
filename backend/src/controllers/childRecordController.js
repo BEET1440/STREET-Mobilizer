@@ -296,6 +296,71 @@ exports.recordAidDistribution = async (req, res) => {
   }
 };
 
+// @desc    Add photo to child photo timeline
+// @route   POST /api/records/:id/photos
+// @access  Private
+exports.addPhotoEncounter = async (req, res) => {
+  try {
+    const { photoUrl, caption, location } = req.body;
+    const record = await ChildRecord.findById(req.params.id);
+
+    if (!record) {
+      return res.status(404).json({ message: 'Child record not found' });
+    }
+
+    // Simulate hashing the photo for on-chain integrity
+    const photoHash = `phash_${Math.random().toString(16).slice(2, 18)}`;
+
+    // Create a transaction on the mock blockchain for the photo encounter
+    const blockchainHash = mockBlockchain.createTransaction({
+      recordId: record._id,
+      photoHash,
+      type: 'PHOTO_ENCOUNTER',
+      location,
+      timestamp: Date.now()
+    }, req.user.email);
+
+    const photoEntry = {
+      photoUrl,
+      photoHash,
+      caption,
+      location: location || record.location,
+      organization: req.user.organization?.name || 'Unknown',
+      blockchainHash
+    };
+
+    record.photoTimeline.push(photoEntry);
+    
+    // Add to audit log
+    record.auditLogs.push({
+      action: 'UPDATED',
+      performedBy: req.user._id,
+      organization: req.user.organization?.name || 'Unknown',
+      details: `New photo encounter added. Photo hash: ${photoHash}`
+    });
+
+    // Also add to the general timeline for summary
+    record.timeline.push({
+      eventType: 'FOLLOW_UP',
+      description: `New photo encounter recorded: ${caption}`,
+      organization: req.user.organization?.name || 'Unknown',
+      blockchainHash
+    });
+
+    await record.save();
+
+    res.status(201).json({
+      success: true,
+      data: record
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Add event to child life timeline
 // @route   POST /api/records/:id/timeline
 // @access  Private
