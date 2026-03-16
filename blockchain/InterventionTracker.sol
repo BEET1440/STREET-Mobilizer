@@ -2,6 +2,14 @@
 pragma solidity ^0.8.20;
 
 /**
+ * @title IStreetMobilizationRegistry
+ * @dev Interface for cross-contract validation of child registration.
+ */
+interface IStreetMobilizationRegistry {
+    function isChildRegistered(string calldata _childId) external view returns (bool);
+}
+
+/**
  * @title InterventionTracker
  * @dev A production-ready smart contract to track and manage interventions performed on registered street children.
  * This contract provides an immutable log of support activities (Medical, Shelter, Food, etc.) for cross-organization coordination.
@@ -21,6 +29,7 @@ contract InterventionTracker {
     // --- State Variables ---
 
     address public owner;
+    IStreetMobilizationRegistry public registry;
     
     // Mapping from childId to an array of their interventions
     mapping(string => Intervention[]) private childInterventions;
@@ -39,6 +48,7 @@ contract InterventionTracker {
     );
     event OrgAuthorized(address indexed org);
     event OrgDeauthorized(address indexed org);
+    event RegistryUpdated(address indexed newRegistry);
 
     // --- Modifiers ---
 
@@ -54,12 +64,23 @@ contract InterventionTracker {
 
     // --- Constructor ---
 
-    constructor() {
+    constructor(address _registryAddress) {
         owner = msg.sender;
         isAuthorizedOrg[msg.sender] = true; // Owner is authorized by default
+        registry = IStreetMobilizationRegistry(_registryAddress);
     }
 
     // --- Administrative Functions ---
+
+    /**
+     * @dev Update the address of the StreetMobilizationRegistry contract.
+     * @param _newRegistry New registry contract address.
+     */
+    function updateRegistry(address _newRegistry) external onlyOwner {
+        require(_newRegistry != address(0), "Registry address cannot be zero");
+        registry = IStreetMobilizationRegistry(_newRegistry);
+        emit RegistryUpdated(_newRegistry);
+    }
 
     /**
      * @dev Authorize an organization to record interventions.
@@ -96,6 +117,11 @@ contract InterventionTracker {
         bytes32 _metadataHash
     ) external onlyAuthorized {
         require(bytes(_childId).length > 0, "Child ID cannot be empty");
+        
+        // --- Cross-Contract Validation ---
+        // Ensure child is registered in the official StreetMobilizationRegistry before recording intervention
+        require(registry.isChildRegistered(_childId), "InterventionTracker: Child not registered in system");
+
         require(bytes(_interventionType).length > 0, "Intervention type required");
         require(bytes(_organization).length > 0, "Organization name required");
         require(_metadataHash != bytes32(0), "Metadata hash required");

@@ -2,6 +2,14 @@
 pragma solidity ^0.8.20;
 
 /**
+ * @title IStreetMobilizationRegistry
+ * @dev Interface for cross-contract interaction with the registry.
+ */
+interface IStreetMobilizationRegistry {
+    function isChildRegistered(string calldata _childId) external view returns (bool);
+}
+
+/**
  * @title StreetMobilizationRegistry
  * @dev A production-ready registry for managing street children identities securely.
  * It combines biometric uniqueness with blockchain immutability to prevent trafficking and fraud.
@@ -168,6 +176,13 @@ contract StreetMobilizationRegistry {
     function getChildRecord(string calldata _childId) external view returns (ChildRecord memory) {
         require(bytes(records[_childId].childId).length > 0, "Record does not exist");
         return records[_childId];
+    }
+
+    /**
+     * @dev Check if a childId is already registered.
+     */
+    function isChildRegistered(string calldata _childId) external view returns (bool) {
+        return bytes(records[_childId].childId).length > 0;
     }
 
     /**
