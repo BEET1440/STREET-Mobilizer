@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext } from 'react';
 const translations = {
   en: {
     dashboard: "Coordination Dashboard",
+    command_center: "Command Center",
     registration: "New Registration",
     verify: "Verify Record",
     public: "Public Portal",
@@ -33,6 +34,7 @@ const translations = {
   },
   sw: {
     dashboard: "Dashibodi ya Uratibu",
+    command_center: "Kituo cha Amri",
     registration: "Usajili Mpya",
     verify: "Thibitisha Rekodi",
     public: "Tovuti ya Umma",
@@ -63,6 +65,7 @@ const translations = {
   },
   sheng: {
     dashboard: "Dashibodi ya Works",
+    command_center: "Kituo ya Amri",
     registration: "Kusajili Mbogi",
     verify: "Ku-check Rekodi",
     public: "Portal ya mtaa",

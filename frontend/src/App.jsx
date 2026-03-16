@@ -16,6 +16,7 @@ import GuardianVerificationForm from './components/GuardianVerificationForm';
 import DataIntegrityVerifier from './components/DataIntegrityVerifier';
 import PublicTransparencyPortal from './components/PublicTransparencyPortal';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import NationalCommandCenter from './components/NationalCommandCenter';
 
 // Organization/Role config
 const ORG_CONFIG = { 
@@ -201,276 +202,6 @@ const Dashboard = ({ onRescueAlert }) => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SM-ID</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('name')}</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Level</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200 text-sm">
-                {mockRecords.map(record => (
-                  <tr 
-                    key={record.id} 
-                    className={`cursor-pointer hover:bg-blue-50 transition ${selectedChild?.id === record.id ? 'bg-blue-50 border-l-4 border-blue-600' : ''}`}
-                    onClick={() => setSelectedChild(record)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap font-mono text-xs font-bold text-blue-600">{record.smId}</td>
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-blue-900">
-                      <div className="flex items-center gap-2">
-                        {record.name}
-                        {record.riskAssessment.level === 'CRITICAL' && <ShieldAlert size={14} className="text-red-600 animate-pulse" />}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 inline-flex text-[10px] leading-5 font-bold rounded-full border ${
-                        record.riskAssessment.level === 'CRITICAL' ? 'bg-red-100 text-red-800 border-red-200' : 
-                        record.riskAssessment.level === 'HIGH' ? 'bg-orange-100 text-orange-800 border-orange-200' :
-                        'bg-green-100 text-green-800 border-green-200'
-                      }`}>
-                        {record.riskAssessment.level}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-600">Red Cross (NGO)</td>
-                    <td className="px-6 py-4 whitespace-nowrap font-mono text-[10px] text-gray-400">{record.blockchainHash}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {selectedChild && (
-            <div className="w-1/3 space-y-6 animate-in slide-in-from-right duration-300">
-              {/* Tab Switcher */}
-              <div className="bg-white p-1 rounded-lg shadow-sm border border-gray-100 flex">
-                <button 
-                  onClick={() => setActiveTab('overview')}
-                  className={`flex-1 py-2 text-xs font-bold rounded-md transition ${activeTab === 'overview' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-                >
-                  {t('overview')}
-                </button>
-                <button 
-                  onClick={() => setActiveTab('aid')}
-                  className={`flex-1 py-2 text-xs font-bold rounded-md transition ${activeTab === 'aid' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-                >
-                  {t('aid_tracking')}
-                </button>
-                <button 
-                  onClick={() => setActiveTab('photos')}
-                  className={`flex-1 py-2 text-xs font-bold rounded-md transition ${activeTab === 'photos' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-                >
-                  {t('photos')}
-                </button>
-                <button 
-                  onClick={() => setActiveTab('guardian')}
-                  className={`flex-1 py-2 text-xs font-bold rounded-md transition ${activeTab === 'guardian' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-                >
-                  {t('guardian')}
-                </button>
-              </div>
-
-              {activeTab === 'overview' ? (
-                <>
-                  {/* Digital ID Card */}
-                  <div className="flex justify-center mb-6">
-                    <DigitalIDCard child={selectedChild} />
-                  </div>
-
-                  {/* Risk Panel */}
-                  <div className="bg-white p-6 rounded-lg shadow-md">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-bold flex items-center gap-2">
-                        <ShieldAlert size={20} className="text-blue-600" /> {t('risk_profile')}
-                      </h3>
-                      <button onClick={() => setSelectedChild(null)} className="text-gray-400 hover:text-gray-600">×</button>
-                    </div>
-                    <RiskAssessmentBadge assessment={selectedChild.riskAssessment} />
-                  </div>
-
-                  {/* Timeline Panel */}
-                  <div className="bg-white p-6 rounded-lg shadow-md max-h-[400px] overflow-y-auto">
-                    <h3 className="text-lg font-bold flex items-center gap-2 mb-6">
-                      <History size={20} className="text-blue-600" /> {t('life_progress')}
-                    </h3>
-                    <ChildTimeline events={selectedChild.timeline} />
-                  </div>
-                </>
-              ) : activeTab === 'aid' ? (
-                <>
-                  {/* Aid Distribution Form */}
-                  <AidDistributionForm 
-                    childId={selectedChild.id} 
-                    onAidRecorded={(newAid) => {
-                      // Update local state for demo
-                      selectedChild.aidDistributions = [newAid, ...selectedChild.aidDistributions];
-                      setSelectedChild({...selectedChild});
-                    }} 
-                  />
-
-                  {/* Aid History */}
-                  <div className="bg-white p-6 rounded-lg shadow-md max-h-[400px] overflow-y-auto">
-                    <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
-                      <Package size={20} className="text-blue-600" /> {t('aid_tracking')}
-                    </h3>
-                    {selectedChild.aidDistributions.length === 0 ? (
-                      <p className="text-gray-400 text-sm italic">No aid distributions recorded yet.</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {selectedChild.aidDistributions.map((aid, idx) => (
-                          <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div className="flex justify-between items-start mb-1">
-                              <span className="text-[10px] font-bold uppercase text-blue-600 px-2 py-0.5 bg-blue-50 rounded border border-blue-100">
-                                {aid.itemType.replace('_', ' ')}
-                              </span>
-                              <span className="text-[10px] text-gray-400 font-mono">
-                                {new Date(aid.timestamp).toLocaleDateString()}
-                              </span>
-                            </div>
-                            <p className="text-sm font-bold text-gray-800">{aid.quantity}</p>
-                            <p className="text-xs text-gray-600 mb-2">{aid.description}</p>
-                            <div className="flex justify-between items-center text-[10px] text-gray-400">
-                              <span className="font-bold text-gray-500">{aid.organization}</span>
-                              <span className="truncate max-w-[100px]" title={aid.blockchainHash}>
-                                BC: {aid.blockchainHash.substring(0, 10)}...
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : activeTab === 'photos' ? (
-                <div className="max-h-[800px] overflow-y-auto pr-2">
-                  <PhotoTimeline 
-                    photos={selectedChild.photoTimeline || []} 
-                    childId={selectedChild.id}
-                    onPhotoAdded={(newPhoto) => {
-                      // Simulate Rescue Alert for "Border Crossing" in Photo Encounter
-                      if (newPhoto.location.toLowerCase().includes('border crossing')) {
-                        onRescueAlert({
-                          alertId: `ALRT-${Math.random().toString(16).slice(2, 10).toUpperCase()}`,
-                          smId: selectedChild.smId,
-                          childName: selectedChild.name,
-                          riskLevel: 'CRITICAL',
-                          zoneName: 'Border Crossing A',
-                          zoneType: 'trafficking_hotspot',
-                          location: newPhoto.location,
-                          notifiedOrgs: ['Red Cross', 'Local Police', 'Save the Children'],
-                          instructions: 'IMMEDIATE DISPATCH: Child spotted in high-risk border zone during photo encounter. Dispatch extraction team.'
-                        });
-                      }
-                      selectedChild.photoTimeline = [newPhoto, ...selectedChild.photoTimeline];
-                      setSelectedChild({...selectedChild});
-                    }}
-                  />
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <GuardianVerificationForm 
-                    childId={selectedChild.id} 
-                    childName={selectedChild.name}
-                    onVerificationComplete={(newVerification) => {
-                      // Update local state for demo
-                      selectedChild.guardianVerifications = [newVerification, ...selectedChild.guardianVerifications];
-                      
-                      // Also add to timeline for visibility
-                      const timelineEvent = {
-                        eventType: 'FAMILY_TRACED',
-                        description: `Guardian verified: ${newVerification.guardianName} (${newVerification.relationship}). Status: ${newVerification.biometricStatus}.`,
-                        organization: activeOrg,
-                        timestamp: new Date().toISOString(),
-                        blockchainHash: newVerification.blockchainHash
-                      };
-                      selectedChild.timeline = [timelineEvent, ...selectedChild.timeline];
-                      
-                      setSelectedChild({...selectedChild});
-                    }} 
-                  />
-
-                  {/* Verification History */}
-                  <div className="bg-white p-6 rounded-lg shadow-md max-h-[400px] overflow-y-auto border border-gray-100">
-                    <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
-                      <ShieldCheck size={20} className="text-blue-600" /> Verification History
-                    </h3>
-                    {selectedChild.guardianVerifications.length === 0 ? (
-                      <p className="text-gray-400 text-sm italic">No guardian verifications recorded yet.</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {selectedChild.guardianVerifications.map((v, idx) => (
-                          <div key={idx} className="p-4 bg-gray-50 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
-                            <div className={`absolute top-0 right-0 w-1 h-full ${v.biometricStatus === 'MATCHED' ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <p className="text-sm font-bold text-gray-900">{v.guardianName}</p>
-                                <p className="text-xs text-blue-600 font-semibold">{v.relationship}</p>
-                              </div>
-                              <span className="text-[10px] text-gray-400 font-mono">
-                                {new Date(v.timestamp).toLocaleDateString()}
-                              </span>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-2 mb-3">
-                              <div className="bg-white p-2 rounded border border-gray-100">
-                                <p className="text-[9px] text-gray-400 uppercase font-bold">Biometrics</p>
-                                <p className={`text-[10px] font-bold ${v.biometricStatus === 'MATCHED' ? 'text-green-600' : 'text-red-600'}`}>
-                                  {v.biometricStatus}
-                                </p>
-                              </div>
-                              <div className="bg-white p-2 rounded border border-gray-100">
-                                <p className="text-[9px] text-gray-400 uppercase font-bold">Historical</p>
-                                <p className={`text-[10px] font-bold ${v.historicalCheckStatus === 'VERIFIED' ? 'text-green-600' : 'text-orange-600'}`}>
-                                  {v.historicalCheckStatus}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex justify-between items-center text-[10px] text-gray-400 pt-2 border-t border-gray-100">
-                              <span className="font-bold text-gray-500">Verified by: {activeOrg}</span>
-                              <span className="truncate max-w-[100px]" title={v.blockchainHash}>
-                                BC: {v.blockchainHash.substring(0, 10)}...
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-      
-      {showMap ? (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Network Hotspot Map</h2>
-            <div className="flex gap-4 text-xs">
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500"></span> Critical Need</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-orange-500"></span> Shelter Needed</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500"></span> Medical Outreach</span>
-            </div>
-          </div>
-          <HotspotMap records={mockRecords} />
-        </div>
-      ) : (
-        <div className="flex gap-6">
-          <div className={`transition-all duration-300 ${selectedChild ? 'w-2/3' : 'w-full'} bg-white p-6 rounded-lg shadow-md`}>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Cross-Organization Activity</h2>
-              <div className="flex gap-2">
-                <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-1 rounded border border-blue-200 font-bold">NGO</span>
-                <span className="text-[10px] bg-red-100 text-red-800 px-2 py-1 rounded border border-red-200 font-bold">HOSPITAL</span>
-                <span className="text-[10px] bg-orange-100 text-orange-800 px-2 py-1 rounded border border-orange-200 font-bold">SHELTER</span>
-              </div>
-            </div>
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SM-ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Child Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Level</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
                 </tr>
@@ -1083,6 +814,9 @@ function MainApp() {
             </h1>
           </div>
           <nav className="mt-6 flex-1">
+            <Link to="/command-center" className="flex items-center gap-3 px-6 py-4 hover:bg-blue-800 transition">
+              <Globe size={20} /> {t('command_center')}
+            </Link>
             <Link to="/" className="flex items-center gap-3 px-6 py-4 hover:bg-blue-800 transition">
               <LayoutDashboard size={20} /> {t('dashboard')}
             </Link>
@@ -1155,6 +889,7 @@ function MainApp() {
           </header>
           
           <Routes>
+            <Route path="/command-center" element={<NationalCommandCenter />} />
             <Route path="/" element={<Dashboard onRescueAlert={setActiveAlert} />} />
             <Route path="/register" element={<Registration onRescueAlert={setActiveAlert} />} />
             <Route path="/verify" element={<Verification />} />
