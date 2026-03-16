@@ -7,6 +7,7 @@ import HotspotMap from './components/HotspotMap';
 import ChildTimeline from './components/ChildTimeline';
 import RiskAssessmentBadge from './components/RiskAssessmentBadge';
 import AidDistributionForm from './components/AidDistributionForm';
+import DigitalIDCard from './components/DigitalIDCard';
 
 // Organization/Role config
 const ORG_CONFIG = { 
@@ -28,6 +29,7 @@ const Dashboard = () => {
   const mockRecords = [
     { 
       id: 1, 
+      smId: 'SM-KE-2026-004321',
       name: 'John Doe', 
       location: 'Central Park', 
       geolocation: { lat: -1.2833, lng: 36.8167 }, 
@@ -41,7 +43,7 @@ const Dashboard = () => {
         trend: 'increasing'
       },
       timeline: [
-        { eventType: 'IDENTIFIED', description: 'Found sleeping near Central Park benches', organization: 'Red Cross (NGO)', timestamp: '2026-03-10', blockchainHash: '0xabc...123' },
+        { eventType: 'IDENTIFIED', description: 'Found sleeping near Central Park benches. Assigned SM-ID: SM-KE-2026-004321', organization: 'Red Cross (NGO)', timestamp: '2026-03-10', blockchainHash: '0xabc...123' },
         { eventType: 'HEALTH_CHECK', description: 'Minor respiratory infection diagnosed', organization: 'General Hospital', timestamp: '2026-03-11', blockchainHash: '0xdef...456' },
         { eventType: 'SHELTER_PLACEMENT', description: 'Placed in Safe Haven temporary shelter', organization: 'Safe Haven', timestamp: '2026-03-12', blockchainHash: '0xghi...789' },
       ],
@@ -52,6 +54,7 @@ const Dashboard = () => {
     },
     { 
       id: 2, 
+      smId: 'SM-KE-2026-009876',
       name: 'Samuel Omondi', 
       location: 'Kibera', 
       geolocation: { lat: -1.3000, lng: 36.7800 }, 
@@ -65,12 +68,13 @@ const Dashboard = () => {
         trend: 'stabilizing'
       },
       timeline: [
-        { eventType: 'IDENTIFIED', description: 'Identified during Kibera outreach', organization: 'Red Cross (NGO)', timestamp: '2026-03-14', blockchainHash: '0xjkl...012' },
+        { eventType: 'IDENTIFIED', description: 'Identified during Kibera outreach. Assigned SM-ID: SM-KE-2026-009876', organization: 'Red Cross (NGO)', timestamp: '2026-03-14', blockchainHash: '0xjkl...012' },
       ],
       aidDistributions: []
     },
     { 
       id: 3, 
+      smId: 'SM-KE-2026-005544',
       name: 'Aisha Kamau', 
       location: 'Eastleigh', 
       geolocation: { lat: -1.2750, lng: 36.8500 }, 
@@ -84,7 +88,7 @@ const Dashboard = () => {
         trend: 'increasing'
       },
       timeline: [
-        { eventType: 'IDENTIFIED', description: 'Found at Eastleigh market', organization: 'Red Cross (NGO)', timestamp: '2026-02-15', blockchainHash: '0xmno...345' },
+        { eventType: 'IDENTIFIED', description: 'Found at Eastleigh market. Assigned SM-ID: SM-KE-2026-005544', organization: 'Red Cross (NGO)', timestamp: '2026-02-15', blockchainHash: '0xmno...345' },
         { eventType: 'SHELTER_PLACEMENT', description: 'Transferred to protection unit', organization: 'Gov Family Dept', timestamp: '2026-02-20', blockchainHash: '0xpqr...678' },
         { eventType: 'SCHOOL_ENROLLMENT', description: 'Enrolled in bridge education program', organization: 'Education First NGO', timestamp: '2026-03-01', blockchainHash: '0xstu...901' },
       ],
@@ -167,10 +171,10 @@ const Dashboard = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SM-ID</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Child Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Level</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Audit Trail</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200 text-sm">
@@ -180,6 +184,7 @@ const Dashboard = () => {
                     className={`cursor-pointer hover:bg-blue-50 transition ${selectedChild?.id === record.id ? 'bg-blue-50 border-l-4 border-blue-600' : ''}`}
                     onClick={() => setSelectedChild(record)}
                   >
+                    <td className="px-6 py-4 whitespace-nowrap font-mono text-xs font-bold text-blue-600">{record.smId}</td>
                     <td className="px-6 py-4 whitespace-nowrap font-medium text-blue-900">
                       <div className="flex items-center gap-2">
                         {record.name}
@@ -223,6 +228,11 @@ const Dashboard = () => {
 
               {activeTab === 'overview' ? (
                 <>
+                  {/* Digital ID Card */}
+                  <div className="flex justify-center mb-6">
+                    <DigitalIDCard child={selectedChild} />
+                  </div>
+
                   {/* Risk Panel */}
                   <div className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-4">
@@ -300,7 +310,7 @@ const Registration = () => {
   const { isOnline } = useOffline();
   const [matchAlert, setMatchAlert] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [registeredRecord, setRegisteredRecord] = useState(null);
   const [offlineSaved, setOfflineSaved] = useState(false);
   const [locationData, setLocationData] = useState(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
@@ -333,17 +343,20 @@ const Registration = () => {
     
     const elements = e.target.elements;
     const name = elements[0].value;
-    const age = elements[1].value;
+    const age = parseInt(elements[1].value);
     const gender = elements[2].value;
     const location = elements[3].value;
 
     const recordData = { 
+      smId: `SM-KE-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`,
       name, 
       age, 
       gender, 
       location, 
       biometricHash: `bio_${Date.now()}`,
       geolocation: locationData,
+      blockchainHash: `0x${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 6)}`,
+      createdAt: new Date().toISOString(),
       initialIntervention: selectedIntervention !== 'None' ? selectedIntervention : null
     };
 
@@ -370,12 +383,12 @@ const Registration = () => {
           contact: '+254 700 123456'
         });
       } else {
-        setIsSuccess(true);
+        setRegisteredRecord(recordData);
       }
     }, 2000);
   };
 
-  if (isSuccess || offlineSaved) {
+  if (registeredRecord || offlineSaved) {
     return (
       <div className="p-6 max-w-2xl mx-auto text-center">
         {offlineSaved ? (
@@ -390,11 +403,26 @@ const Registration = () => {
         ) : (
           <>
             <CheckCircle2 className="mx-auto h-20 w-20 text-green-500 mb-4" />
-            <h1 className="text-3xl font-bold mb-2">Network Registration Success</h1>
-            <p className="text-gray-600 mb-6">Record and initial intervention logged across the NGO Coordination Network.</p>
+            <h1 className="text-3xl font-bold mb-2">Registration Success</h1>
+            <p className="text-gray-600 mb-6">Temporary Digital Identity issued and logged to blockchain.</p>
+            
+            <div className="flex justify-center mb-10">
+              <DigitalIDCard child={registeredRecord} />
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-8 text-left">
+              <h4 className="font-bold text-blue-800 text-sm mb-2 flex items-center gap-2">
+                <ShieldCheck size={16} /> Identity Utilization
+              </h4>
+              <ul className="text-xs text-blue-700 space-y-1">
+                <li>• Use SM-ID for school enrollment and healthcare access.</li>
+                <li>• Present this digital ID to government agencies for formal registration.</li>
+                <li>• All aid distributions will be tracked using this identity.</li>
+              </ul>
+            </div>
           </>
         )}
-        <button onClick={() => { setIsSuccess(false); setOfflineSaved(false); setLocationData(null); }} className="bg-blue-600 text-white px-6 py-2 rounded-md font-bold">Register Another</button>
+        <button onClick={() => { setRegisteredRecord(null); setOfflineSaved(false); setLocationData(null); }} className="bg-blue-600 text-white px-6 py-2 rounded-md font-bold">Register Another</button>
       </div>
     );
   }

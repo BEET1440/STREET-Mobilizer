@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const childRecordSchema = new mongoose.Schema({
+  smId: {
+    type: String,
+    unique: true,
+  },
   name: {
     type: String,
     required: true,

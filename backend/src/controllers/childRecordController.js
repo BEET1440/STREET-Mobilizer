@@ -3,6 +3,21 @@ const mockBlockchain = require('../../../blockchain/mock');
 const missingChildService = require('../services/missingChildService');
 const riskAssessmentService = require('../services/riskAssessmentService');
 
+// Helper to generate SM-ID (Temporary Digital ID)
+// Format: SM-KE-2026-004321
+const generateSmId = async () => {
+  const year = new Date().getFullYear();
+  const countryCode = 'KE'; // Default for now
+  const randomNum = Math.floor(100000 + Math.random() * 900000); // 6-digit random
+  const smId = `SM-${countryCode}-${year}-${randomNum}`;
+  
+  // Basic check for uniqueness (for production, use a more robust sequence/counter)
+  const existing = await ChildRecord.findOne({ smId });
+  if (existing) return generateSmId(); 
+  
+  return smId;
+};
+
 // @desc    Register a new child record
 // @route   POST /api/records
 // @access  Private
@@ -31,8 +46,12 @@ exports.registerChild = async (req, res) => {
       age, geolocation, timeOnStreets, groupAssociations, healthCondition
     });
 
+    // 4. Generate Temporary Digital ID (SM-ID)
+    const smId = await generateSmId();
+
     // Create a transaction on the mock blockchain
     const blockchainHash = mockBlockchain.createTransaction({
+      smId,
       name,
       age,
       gender,
@@ -46,12 +65,13 @@ exports.registerChild = async (req, res) => {
     // Initial Timeline Event
     const initialEvent = {
       eventType: 'IDENTIFIED',
-      description: `Child identified and registered at ${location}`,
+      description: `Child identified and registered at ${location} with Temporary ID: ${smId}`,
       organization: req.user.organization?.name || 'Unknown',
       blockchainHash
     };
 
     const childRecord = await ChildRecord.create({
+      smId,
       name,
       age,
       gender,
@@ -77,7 +97,7 @@ exports.registerChild = async (req, res) => {
         action: 'REGISTERED',
         performedBy: req.user._id,
         organization: req.user.organization?.name || 'Unknown',
-        details: 'Initial registration and risk assessment'
+        details: `Initial registration and risk assessment. Assigned SM-ID: ${smId}`
       }]
     });
 
