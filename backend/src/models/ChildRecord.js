@@ -103,9 +103,24 @@ const childRecordSchema = new mongoose.Schema({
       blockchainRef: String // Hash of this intervention record on the chain
     }
   ],
+  aidDistributions: [
+    {
+      itemType: {
+        type: String,
+        enum: ['food', 'clothing', 'medical_support', 'school_supplies'],
+        required: true
+      },
+      quantity: String,
+      description: String,
+      organization: String,
+      performedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      timestamp: { type: Date, default: Date.now },
+      blockchainHash: String
+    }
+  ],
   auditLogs: [
     {
-      action: { type: String, enum: ['REGISTERED', 'VIEWED', 'UPDATED', 'INTERVENTION_ADDED'], required: true },
+      action: { type: String, enum: ['REGISTERED', 'VIEWED', 'UPDATED', 'INTERVENTION_ADDED', 'AID_DISTRIBUTED'], required: true },
       performedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
       organization: String,
       timestamp: { type: Date, default: Date.now },

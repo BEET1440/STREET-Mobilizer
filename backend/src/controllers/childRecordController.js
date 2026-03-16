@@ -213,6 +213,69 @@ exports.addIntervention = async (req, res) => {
   }
 };
 
+// @desc    Record aid distribution for a child
+// @route   POST /api/records/:id/aid
+// @access  Private
+exports.recordAidDistribution = async (req, res) => {
+  try {
+    const { itemType, quantity, description } = req.body;
+    const record = await ChildRecord.findById(req.params.id);
+
+    if (!record) {
+      return res.status(404).json({ message: 'Child record not found' });
+    }
+
+    // Create a transaction on the mock blockchain for aid distribution
+    const blockchainHash = mockBlockchain.createTransaction({
+      recordId: record._id,
+      itemType,
+      quantity,
+      description,
+      type: 'AID_DISTRIBUTION',
+      timestamp: Date.now()
+    }, req.user.email);
+
+    const aidEntry = {
+      itemType,
+      quantity,
+      description,
+      organization: req.user.organization?.name || 'Unknown',
+      performedBy: req.user._id,
+      blockchainHash
+    };
+
+    record.aidDistributions.push(aidEntry);
+    
+    // Add to audit log
+    record.auditLogs.push({
+      action: 'AID_DISTRIBUTED',
+      performedBy: req.user._id,
+      organization: req.user.organization?.name || 'Unknown',
+      details: `Distributed ${quantity} of ${itemType}: ${description}`
+    });
+
+    // Also add to timeline for visibility
+    record.timeline.push({
+      eventType: 'FOLLOW_UP',
+      description: `Received ${itemType} aid: ${description}`,
+      organization: req.user.organization?.name || 'Unknown',
+      blockchainHash
+    });
+
+    await record.save();
+
+    res.status(201).json({
+      success: true,
+      data: record
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Add event to child life timeline
 // @route   POST /api/records/:id/timeline
 // @access  Private

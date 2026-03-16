@@ -6,6 +6,7 @@ import { saveOfflineRecord } from './utils/offlineStorage';
 import HotspotMap from './components/HotspotMap';
 import ChildTimeline from './components/ChildTimeline';
 import RiskAssessmentBadge from './components/RiskAssessmentBadge';
+import AidDistributionForm from './components/AidDistributionForm';
 
 // Organization/Role config
 const ORG_CONFIG = { 
@@ -21,8 +22,9 @@ const Dashboard = () => {
   const [showMap, setShowMap] = useState(false);
   const [activeOrg, setActiveOrg] = useState('Red Cross (NGO)');
   const [selectedChild, setSelectedChild] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' or 'aid'
   
-  // Enhanced mock records with risk assessment and timeline
+  // Enhanced mock records with risk assessment, timeline, and aid
   const mockRecords = [
     { 
       id: 1, 
@@ -42,6 +44,10 @@ const Dashboard = () => {
         { eventType: 'IDENTIFIED', description: 'Found sleeping near Central Park benches', organization: 'Red Cross (NGO)', timestamp: '2026-03-10', blockchainHash: '0xabc...123' },
         { eventType: 'HEALTH_CHECK', description: 'Minor respiratory infection diagnosed', organization: 'General Hospital', timestamp: '2026-03-11', blockchainHash: '0xdef...456' },
         { eventType: 'SHELTER_PLACEMENT', description: 'Placed in Safe Haven temporary shelter', organization: 'Safe Haven', timestamp: '2026-03-12', blockchainHash: '0xghi...789' },
+      ],
+      aidDistributions: [
+        { itemType: 'food', quantity: '2kg Rice & Beans', description: 'Weekly food basket', organization: 'Red Cross (NGO)', timestamp: '2026-03-12', blockchainHash: '0x123...aid1' },
+        { itemType: 'clothing', quantity: '1 Blanket', description: 'Cold weather support', organization: 'Safe Haven', timestamp: '2026-03-13', blockchainHash: '0x456...aid2' }
       ]
     },
     { 
@@ -60,7 +66,8 @@ const Dashboard = () => {
       },
       timeline: [
         { eventType: 'IDENTIFIED', description: 'Identified during Kibera outreach', organization: 'Red Cross (NGO)', timestamp: '2026-03-14', blockchainHash: '0xjkl...012' },
-      ]
+      ],
+      aidDistributions: []
     },
     { 
       id: 3, 
@@ -80,6 +87,9 @@ const Dashboard = () => {
         { eventType: 'IDENTIFIED', description: 'Found at Eastleigh market', organization: 'Red Cross (NGO)', timestamp: '2026-02-15', blockchainHash: '0xmno...345' },
         { eventType: 'SHELTER_PLACEMENT', description: 'Transferred to protection unit', organization: 'Gov Family Dept', timestamp: '2026-02-20', blockchainHash: '0xpqr...678' },
         { eventType: 'SCHOOL_ENROLLMENT', description: 'Enrolled in bridge education program', organization: 'Education First NGO', timestamp: '2026-03-01', blockchainHash: '0xstu...901' },
+      ],
+      aidDistributions: [
+        { itemType: 'school_supplies', quantity: '1 Backpack Kit', description: 'Stationery and uniform for bridge program', organization: 'Education First NGO', timestamp: '2026-03-02', blockchainHash: '0x789...aid3' }
       ]
     },
   ];
@@ -195,24 +205,89 @@ const Dashboard = () => {
 
           {selectedChild && (
             <div className="w-1/3 space-y-6 animate-in slide-in-from-right duration-300">
-              {/* Risk Panel */}
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold flex items-center gap-2">
-                    <ShieldAlert size={20} className="text-blue-600" /> AI Risk Profile
-                  </h3>
-                  <button onClick={() => setSelectedChild(null)} className="text-gray-400 hover:text-gray-600">×</button>
-                </div>
-                <RiskAssessmentBadge assessment={selectedChild.riskAssessment} />
+              {/* Tab Switcher */}
+              <div className="bg-white p-1 rounded-lg shadow-sm border border-gray-100 flex">
+                <button 
+                  onClick={() => setActiveTab('overview')}
+                  className={`flex-1 py-2 text-xs font-bold rounded-md transition ${activeTab === 'overview' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                >
+                  Overview
+                </button>
+                <button 
+                  onClick={() => setActiveTab('aid')}
+                  className={`flex-1 py-2 text-xs font-bold rounded-md transition ${activeTab === 'aid' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                >
+                  Aid Tracking
+                </button>
               </div>
 
-              {/* Timeline Panel */}
-              <div className="bg-white p-6 rounded-lg shadow-md max-h-[500px] overflow-y-auto">
-                <h3 className="text-lg font-bold flex items-center gap-2 mb-6">
-                  <History size={20} className="text-blue-600" /> Life Progress Timeline
-                </h3>
-                <ChildTimeline events={selectedChild.timeline} />
-              </div>
+              {activeTab === 'overview' ? (
+                <>
+                  {/* Risk Panel */}
+                  <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-bold flex items-center gap-2">
+                        <ShieldAlert size={20} className="text-blue-600" /> AI Risk Profile
+                      </h3>
+                      <button onClick={() => setSelectedChild(null)} className="text-gray-400 hover:text-gray-600">×</button>
+                    </div>
+                    <RiskAssessmentBadge assessment={selectedChild.riskAssessment} />
+                  </div>
+
+                  {/* Timeline Panel */}
+                  <div className="bg-white p-6 rounded-lg shadow-md max-h-[400px] overflow-y-auto">
+                    <h3 className="text-lg font-bold flex items-center gap-2 mb-6">
+                      <History size={20} className="text-blue-600" /> Life Progress Timeline
+                    </h3>
+                    <ChildTimeline events={selectedChild.timeline} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Aid Distribution Form */}
+                  <AidDistributionForm 
+                    childId={selectedChild.id} 
+                    onAidRecorded={(newAid) => {
+                      // Update local state for demo
+                      selectedChild.aidDistributions = [newAid, ...selectedChild.aidDistributions];
+                      setSelectedChild({...selectedChild});
+                    }} 
+                  />
+
+                  {/* Aid History */}
+                  <div className="bg-white p-6 rounded-lg shadow-md max-h-[400px] overflow-y-auto">
+                    <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
+                      <Package size={20} className="text-blue-600" /> Aid History
+                    </h3>
+                    {selectedChild.aidDistributions.length === 0 ? (
+                      <p className="text-gray-400 text-sm italic">No aid distributions recorded yet.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {selectedChild.aidDistributions.map((aid, idx) => (
+                          <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <div className="flex justify-between items-start mb-1">
+                              <span className="text-[10px] font-bold uppercase text-blue-600 px-2 py-0.5 bg-blue-50 rounded border border-blue-100">
+                                {aid.itemType.replace('_', ' ')}
+                              </span>
+                              <span className="text-[10px] text-gray-400 font-mono">
+                                {new Date(aid.timestamp).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <p className="text-sm font-bold text-gray-800">{aid.quantity}</p>
+                            <p className="text-xs text-gray-600 mb-2">{aid.description}</p>
+                            <div className="flex justify-between items-center text-[10px] text-gray-400">
+                              <span className="font-bold text-gray-500">{aid.organization}</span>
+                              <span className="truncate max-w-[100px]" title={aid.blockchainHash}>
+                                BC: {aid.blockchainHash.substring(0, 10)}...
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
