@@ -107,6 +107,28 @@ const childRecordSchema = new mongoose.Schema({
       blockchainRef: String // Hash of this intervention record on the chain
     }
   ],
+  guardianVerifications: [
+    {
+      guardianName: { type: String, required: true },
+      guardianNationalId: String,
+      relationship: { type: String, required: true },
+      biometricStatus: { 
+        type: String, 
+        enum: ['MATCHED', 'NOT_MATCHED', 'UNVERIFIED'], 
+        default: 'UNVERIFIED' 
+      },
+      historicalCheckStatus: { 
+        type: String, 
+        enum: ['VERIFIED', 'UNVERIFIED', 'FLAGGED'], 
+        default: 'UNVERIFIED' 
+      },
+      verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      organization: String,
+      timestamp: { type: Date, default: Date.now },
+      blockchainHash: String,
+      notes: String
+    }
+  ],
   aidDistributions: [
     {
       itemType: {

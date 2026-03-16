@@ -11,6 +11,7 @@ import DigitalIDCard from './components/DigitalIDCard';
 import PhotoTimeline from './components/PhotoTimeline';
 import RescueAlert from './components/RescueAlert';
 import ShelterAvailability from './components/ShelterAvailability';
+import GuardianVerificationForm from './components/GuardianVerificationForm';
 
 // Organization/Role config
 const ORG_CONFIG = { 
@@ -26,7 +27,7 @@ const Dashboard = ({ onRescueAlert }) => {
   const [showMap, setShowMap] = useState(false);
   const [activeOrg, setActiveOrg] = useState('Red Cross (NGO)');
   const [selectedChild, setSelectedChild] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'aid', or 'photos'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'aid', 'photos', or 'guardian'
   const [activeAlert, setActiveAlert] = useState(null);
   
   // Enhanced mock records with risk assessment, timeline, aid, and photos
@@ -58,7 +59,8 @@ const Dashboard = ({ onRescueAlert }) => {
       photoTimeline: [
         { photoUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1974&auto=format&fit=crop', photoHash: 'phash_001', caption: 'Initial encounter photo', location: 'Central Park', organization: 'Red Cross (NGO)', timestamp: '2026-03-10', blockchainHash: '0xabc...p1' },
         { photoUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=1974&auto=format&fit=crop', photoHash: 'phash_002', caption: 'After 2 days in shelter', location: 'Safe Haven', organization: 'Safe Haven', timestamp: '2026-03-12', blockchainHash: '0xdef...p2' }
-      ]
+      ],
+      guardianVerifications: []
     },
     { 
       id: 2, 
@@ -81,6 +83,9 @@ const Dashboard = ({ onRescueAlert }) => {
       aidDistributions: [],
       photoTimeline: [
         { photoUrl: 'https://images.unsplash.com/photo-1503443207922-dff7d543fd0e?q=80&w=1854&auto=format&fit=crop', photoHash: 'phash_s1', caption: 'Registered at Kibera outpost', location: 'Kibera', organization: 'Red Cross (NGO)', timestamp: '2026-03-14', blockchainHash: '0xjkl...p3' }
+      ],
+      guardianVerifications: [
+        { guardianName: 'Mary Omondi', relationship: 'Mother', biometricStatus: 'MATCHED', historicalCheckStatus: 'VERIFIED', timestamp: '2026-03-15', blockchainHash: '0x456...g1' }
       ]
     },
     { 
@@ -109,7 +114,8 @@ const Dashboard = ({ onRescueAlert }) => {
       photoTimeline: [
         { photoUrl: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?q=80&w=2080&auto=format&fit=crop', photoHash: 'phash_a1', caption: 'Identification photo', location: 'Eastleigh market', organization: 'Red Cross (NGO)', timestamp: '2026-02-15', blockchainHash: '0xmno...p4' },
         { photoUrl: 'https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?q=80&w=2038&auto=format&fit=crop', photoHash: 'phash_a2', caption: 'Enrollment in bridge program', location: 'Education First HQ', organization: 'Education First NGO', timestamp: '2026-03-01', blockchainHash: '0xstu...p5' }
-      ]
+      ],
+      guardianVerifications: []
     },
   ];
   
@@ -247,6 +253,12 @@ const Dashboard = ({ onRescueAlert }) => {
                 >
                   Photos
                 </button>
+                <button 
+                  onClick={() => setActiveTab('guardian')}
+                  className={`flex-1 py-2 text-xs font-bold rounded-md transition ${activeTab === 'guardian' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                >
+                  Guardian
+                </button>
               </div>
 
               {activeTab === 'overview' ? (
@@ -320,7 +332,7 @@ const Dashboard = ({ onRescueAlert }) => {
                     )}
                   </div>
                 </>
-              ) : (
+              ) : activeTab === 'photos' ? (
                 <div className="max-h-[800px] overflow-y-auto pr-2">
                   <PhotoTimeline 
                     photos={selectedChild.photoTimeline || []} 
@@ -344,6 +356,78 @@ const Dashboard = ({ onRescueAlert }) => {
                       setSelectedChild({...selectedChild});
                     }}
                   />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <GuardianVerificationForm 
+                    childId={selectedChild.id} 
+                    childName={selectedChild.name}
+                    onVerificationComplete={(newVerification) => {
+                      // Update local state for demo
+                      selectedChild.guardianVerifications = [newVerification, ...selectedChild.guardianVerifications];
+                      
+                      // Also add to timeline for visibility
+                      const timelineEvent = {
+                        eventType: 'FAMILY_TRACED',
+                        description: `Guardian verified: ${newVerification.guardianName} (${newVerification.relationship}). Status: ${newVerification.biometricStatus}.`,
+                        organization: activeOrg,
+                        timestamp: new Date().toISOString(),
+                        blockchainHash: newVerification.blockchainHash
+                      };
+                      selectedChild.timeline = [timelineEvent, ...selectedChild.timeline];
+                      
+                      setSelectedChild({...selectedChild});
+                    }} 
+                  />
+
+                  {/* Verification History */}
+                  <div className="bg-white p-6 rounded-lg shadow-md max-h-[400px] overflow-y-auto border border-gray-100">
+                    <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
+                      <ShieldCheck size={20} className="text-blue-600" /> Verification History
+                    </h3>
+                    {selectedChild.guardianVerifications.length === 0 ? (
+                      <p className="text-gray-400 text-sm italic">No guardian verifications recorded yet.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {selectedChild.guardianVerifications.map((v, idx) => (
+                          <div key={idx} className="p-4 bg-gray-50 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+                            <div className={`absolute top-0 right-0 w-1 h-full ${v.biometricStatus === 'MATCHED' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <p className="text-sm font-bold text-gray-900">{v.guardianName}</p>
+                                <p className="text-xs text-blue-600 font-semibold">{v.relationship}</p>
+                              </div>
+                              <span className="text-[10px] text-gray-400 font-mono">
+                                {new Date(v.timestamp).toLocaleDateString()}
+                              </span>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-2 mb-3">
+                              <div className="bg-white p-2 rounded border border-gray-100">
+                                <p className="text-[9px] text-gray-400 uppercase font-bold">Biometrics</p>
+                                <p className={`text-[10px] font-bold ${v.biometricStatus === 'MATCHED' ? 'text-green-600' : 'text-red-600'}`}>
+                                  {v.biometricStatus}
+                                </p>
+                              </div>
+                              <div className="bg-white p-2 rounded border border-gray-100">
+                                <p className="text-[9px] text-gray-400 uppercase font-bold">Historical</p>
+                                <p className={`text-[10px] font-bold ${v.historicalCheckStatus === 'VERIFIED' ? 'text-green-600' : 'text-orange-600'}`}>
+                                  {v.historicalCheckStatus}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center text-[10px] text-gray-400 pt-2 border-t border-gray-100">
+                              <span className="font-bold text-gray-500">Verified by: {activeOrg}</span>
+                              <span className="truncate max-w-[100px]" title={v.blockchainHash}>
+                                BC: {v.blockchainHash.substring(0, 10)}...
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

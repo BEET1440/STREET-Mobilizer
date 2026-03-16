@@ -8,6 +8,7 @@ const {
   addTimelineEvent,
   recordAidDistribution,
   addPhotoEncounter,
+  verifyGuardian,
 } = require('../controllers/childRecordController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
@@ -19,5 +20,6 @@ router.post('/:id/intervention', protect, authorize('add_intervention'), addInte
 router.post('/:id/timeline', protect, authorize('update'), addTimelineEvent);
 router.post('/:id/aid', protect, authorize('add_intervention'), recordAidDistribution);
 router.post('/:id/photos', protect, authorize('update'), addPhotoEncounter);
+router.post('/:id/guardian-verify', protect, authorize('update'), verifyGuardian);
 
 module.exports = router;

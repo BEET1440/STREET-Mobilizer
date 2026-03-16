@@ -306,7 +306,95 @@ exports.recordAidDistribution = async (req, res) => {
   }
 };
 
-// @desc    Add photo to child photo timeline
+// @desc    Verify a guardian for a child record
+// @route   POST /api/records/:id/guardian-verify
+// @access  Private
+exports.verifyGuardian = async (req, res) => {
+  try {
+    const { 
+      guardianName, 
+      guardianNationalId, 
+      relationship, 
+      biometricData, // Simulated
+      notes 
+    } = req.body;
+
+    const record = await ChildRecord.findById(req.params.id);
+
+    if (!record) {
+      return res.status(404).json({ message: 'Child record not found' });
+    }
+
+    // 1. Simulate Biometric Verification (Match guardian to child's history/biometrics)
+    // In a real app, this would use a biometric service
+    const biometricStatus = biometricData ? 'MATCHED' : 'NOT_MATCHED';
+    
+    // 2. Simulate Historical Records Check
+    // e.g., check if this guardian was previously mentioned in initial intake or case notes
+    const historicalCheckStatus = (record.missingMatchDetails?.parentContact?.includes(guardianName) || 
+                                   record.name.includes(guardianName.split(' ')[0])) ? 'VERIFIED' : 'UNVERIFIED';
+
+    // 3. Create a transaction on the mock blockchain for guardian verification
+    const blockchainHash = mockBlockchain.createTransaction({
+      recordId: record._id,
+      guardianName,
+      relationship,
+      biometricStatus,
+      historicalCheckStatus,
+      type: 'GUARDIAN_VERIFICATION',
+      timestamp: Date.now()
+    }, req.user.email);
+
+    const verificationEntry = {
+      guardianName,
+      guardianNationalId,
+      relationship,
+      biometricStatus,
+      historicalCheckStatus,
+      verifiedBy: req.user._id,
+      organization: req.user.organization?.name || 'Unknown',
+      blockchainHash,
+      notes,
+      timestamp: Date.now()
+    };
+
+    record.guardianVerifications.push(verificationEntry);
+    
+    // Add to audit log
+    record.auditLogs.push({
+      action: 'GUARDIAN_VERIFIED',
+      performedBy: req.user._id,
+      organization: req.user.organization?.name || 'Unknown',
+      details: `Guardian ${guardianName} (${relationship}) verified with biometric status: ${biometricStatus}`
+    });
+
+    // Also add to timeline for visibility
+    record.timeline.push({
+      eventType: 'FAMILY_TRACED',
+      description: `Guardian verification completed for ${guardianName}. Relationship: ${relationship}. Status: ${biometricStatus}.`,
+      organization: req.user.organization?.name || 'Unknown',
+      blockchainHash
+    });
+
+    await record.save();
+
+    res.status(201).json({
+      success: true,
+      data: record,
+      verificationResult: {
+        biometricStatus,
+        historicalCheckStatus
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Add photo encounter to a child record
 // @route   POST /api/records/:id/photos
 // @access  Private
 exports.addPhotoEncounter = async (req, res) => {
