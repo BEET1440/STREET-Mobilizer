@@ -29,6 +29,9 @@ contract StreetMobilizationRegistry {
     // Mapping from biometricHash to childId to ensure uniqueness and allow lookups
     mapping(bytes32 => string) private biometricToId;
 
+    // Mapping to track if a biometric hash has already been registered
+    mapping(bytes32 => bool) public biometricExists;
+
     // Authorized registrars (NGOs, Government agencies, Shelters)
     mapping(address => bool) public isAuthorizedRegistrar;
 
@@ -98,10 +101,10 @@ contract StreetMobilizationRegistry {
         require(_dataHash != bytes32(0), "Data hash required");
         
         // Ensure biometric uniqueness (Crucial for preventing trafficking/duplicate IDs)
-        require(bytes(biometricToId[_biometricHash]).length == 0, "Biometric data already registered");
+        require(!biometricExists[_biometricHash], "StreetRegistry: Biometric data already registered");
         
         // Ensure childId uniqueness
-        require(bytes(records[_childId].childId).length == 0, "Child ID already exists");
+        require(bytes(records[_childId].childId).length == 0, "StreetRegistry: Child ID already exists");
 
         // Store the record
         records[_childId] = ChildRecord({
@@ -113,8 +116,9 @@ contract StreetMobilizationRegistry {
             active: true
         });
 
-        // Map biometric to ID for verification lookups
+        // Map biometric to ID for verification lookups and uniqueness tracking
         biometricToId[_biometricHash] = _childId;
+        biometricExists[_biometricHash] = true;
 
         emit ChildRegistered(_childId, _biometricHash, msg.sender);
     }
@@ -160,6 +164,6 @@ contract StreetMobilizationRegistry {
      * @dev Check if a biometric hash is already registered.
      */
     function isBiometricRegistered(bytes32 _biometricHash) external view returns (bool) {
-        return bytes(biometricToId[_biometricHash]).length > 0;
+        return biometricExists[_biometricHash];
     }
 }
