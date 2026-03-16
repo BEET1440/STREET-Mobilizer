@@ -21,5 +21,6 @@ router.post('/:id/timeline', protect, authorize('update'), addTimelineEvent);
 router.post('/:id/aid', protect, authorize('add_intervention'), recordAidDistribution);
 router.post('/:id/photos', protect, authorize('update'), addPhotoEncounter);
 router.post('/:id/guardian-verify', protect, authorize('update'), verifyGuardian);
+router.get('/integrity/:smId', protect, authorize('read'), getRecordIntegrity);
 
 module.exports = router;

@@ -127,6 +127,59 @@ exports.registerChild = async (req, res) => {
   }
 };
 
+// @desc    Get Data Integrity for a record by SM-ID
+// @route   GET /api/records/integrity/:smId
+// @access  Private
+exports.getRecordIntegrity = async (req, res) => {
+  try {
+    const { smId } = req.params;
+
+    // Find in database
+    const dbRecord = await ChildRecord.findOne({ smId });
+    if (!dbRecord) {
+      return res.status(404).json({ message: 'No record found with this SM-ID.' });
+    }
+
+    // Verify against blockchain using the initial blockchain hash
+    const blockchainRecord = mockBlockchain.getRecordByHash(dbRecord.blockchainHash);
+    if (!blockchainRecord) {
+      return res.status(404).json({ 
+        message: 'Record not found in the blockchain! This may indicate a critical data issue.',
+        integrity: false
+      });
+    }
+
+    // Deep compare data to ensure integrity (simple version)
+    const isIntact = dbRecord.name === blockchainRecord.data.name &&
+                     dbRecord.age === blockchainRecord.data.age &&
+                     dbRecord.gender === blockchainRecord.data.gender &&
+                     dbRecord.smId === blockchainRecord.data.smId;
+
+    if (!isIntact) {
+      return res.status(200).json({
+        success: true,
+        message: 'Data integrity compromised! Blockchain record does not match database record.',
+        integrity: false,
+        dbRecord,
+        blockchainRecord
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Record verified successfully. Data is intact and matches the blockchain ledger.',
+      integrity: true,
+      dbRecord,
+      blockchainRecord,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 // @desc    Get all child records
 // @route   GET /api/records
 // @access  Private

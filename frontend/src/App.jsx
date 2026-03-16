@@ -751,17 +751,7 @@ const Registration = ({ onRescueAlert }) => {
   );
 };
 
-const Verification = () => (
-  <div className="p-6 max-w-2xl mx-auto">
-    <h1 className="text-3xl font-bold mb-6">Record Verification</h1>
-    <div className="bg-white p-8 rounded-lg shadow-md text-center">
-      <Search className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-      <h2 className="text-xl font-medium mb-2">Scan Biometrics to Retrieve Record</h2>
-      <p className="text-gray-500 mb-6">This will search the blockchain for an existing record matching the biometric template.</p>
-      <button className="bg-blue-600 text-white px-8 py-3 rounded-md font-bold hover:bg-blue-700">Start Scan</button>
-    </div>
-  </div>
-);
+const Verification = () => <div className="p-6"><DataIntegrityVerifier /></div>;
 
 const Login = ({ setAuth }) => (
   <div className="min-h-screen flex items-center justify-center bg-gray-100">
