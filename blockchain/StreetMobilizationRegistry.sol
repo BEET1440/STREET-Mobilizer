@@ -37,8 +37,15 @@ contract StreetMobilizationRegistry {
 
     // --- Events ---
 
-    event ChildRegistered(string indexed childId, bytes32 indexed biometricHash, address indexed registrar);
-    event ChildUpdated(string indexed childId, bytes32 newDataHash, address indexed updater);
+    /**
+     * @dev Audit Trail Events
+     * Every critical operation emits an event to ensure full transparency and accountability.
+     */
+    event ChildRegistered(string indexed childId, bytes32 indexed biometricHash, address indexed registrar, uint256 timestamp);
+    event ChildRecordUpdated(string indexed childId, address indexed actor, uint256 timestamp);
+    event BiometricVerified(string indexed childId, address indexed verifier, uint256 timestamp);
+    event DataHashUpdated(string indexed childId, bytes32 newDataHash, address indexed actor, uint256 timestamp);
+    
     event RegistrarAuthorized(address indexed registrar);
     event RegistrarDeauthorized(address indexed registrar);
 
@@ -120,7 +127,7 @@ contract StreetMobilizationRegistry {
         biometricToId[_biometricHash] = _childId;
         biometricExists[_biometricHash] = true;
 
-        emit ChildRegistered(_childId, _biometricHash, msg.sender);
+        emit ChildRegistered(_childId, _biometricHash, msg.sender, block.timestamp);
     }
 
     /**
@@ -129,10 +136,12 @@ contract StreetMobilizationRegistry {
      * @return childId The unique ID of the matched child.
      * @return record The full ChildRecord struct.
      */
-    function verifyChild(bytes32 _biometricHash) external view returns (string memory childId, ChildRecord memory record) {
+    function verifyChild(bytes32 _biometricHash) external returns (string memory childId, ChildRecord memory record) {
         childId = biometricToId[_biometricHash];
         require(bytes(childId).length > 0, "No record found for this biometric");
         record = records[childId];
+        
+        emit BiometricVerified(childId, msg.sender, block.timestamp);
     }
 
     /**
@@ -147,7 +156,8 @@ contract StreetMobilizationRegistry {
 
         records[_childId].dataHash = _newDataHash;
         
-        emit ChildUpdated(_childId, _newDataHash, msg.sender);
+        emit DataHashUpdated(_childId, _newDataHash, msg.sender, block.timestamp);
+        emit ChildRecordUpdated(_childId, msg.sender, block.timestamp);
     }
 
     /**
